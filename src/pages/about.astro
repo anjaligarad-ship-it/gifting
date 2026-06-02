@@ -1,0 +1,92 @@
+---
+import Layout from '../layouts/Layout.astro';
+export const prerender = true;
+---
+<Layout title="About & Sustainability — One Earth Gifting" description="Our story, mission, and sustainability commitments. A venture of One Earth Beyond Ltd.">
+
+  <div class="about-hero">
+    <div class="container">
+      <p class="eyebrow" style="color:rgba(255,255,255,0.55);margin-bottom:0.75rem;">Our story</p>
+      <h1>Gifting that gives back</h1>
+      <p>One Earth Gifting is the sustainable gifting venture of One Earth Beyond Ltd — a company built around the belief that business can be a force for good.</p>
+    </div>
+  </div>
+
+  <section class="about-section">
+    <div class="container">
+      <div class="about-grid">
+        <div>
+          <p class="eyebrow">Our mission</p>
+          <h2>Gifts with purpose, not just pretty packaging</h2>
+          <p>We started One Earth Gifting because we were tired of corporate gifts that ended up in landfill — cheap, plastic-wrapped, forgotten. We wanted to create something different: gifts that people actually love, from makers who are paid fairly, that leave the planet better than we found it.</p>
+          <p style="margin-top:1rem;">Every product in our range is hand-picked against strict ethical, environmental, and quality criteria. If it doesn't pass our test, it doesn't make the cut.</p>
+          <a href="/shop" class="btn btn-ghost" style="margin-top:1.5rem;">Browse our collection</a>
+        </div>
+        <div>
+          <img src="/images/EarthTonesCollection2.jpeg" alt="Sustainable gift collection" loading="lazy" onerror="this.style.display='none'" style="background:var(--sand);min-height:280px;">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="about-section" style="background:var(--forest);color:var(--white);" id="sustainability">
+    <div class="container">
+      <div style="max-width:660px;margin:0 auto;text-align:center;">
+        <p class="eyebrow" style="color:rgba(255,255,255,0.55);">Certified member</p>
+        <h2 style="color:var(--white);">1% for the Planet</h2>
+        <p style="color:rgba(255,255,255,0.78);font-size:1.02rem;margin-bottom:2rem;">We donate 1% of all annual sales — not profit, sales — to vetted environmental non-profits. Supporting reforestation, ocean clean-up, and climate education.</p>
+        <div style="display:flex;gap:3rem;justify-content:center;flex-wrap:wrap;">
+          {[['1%','of every sale'],['3','causes funded'],['100%','plastic-free packaging']].map(([n,l]) => (
+            <div style="text-align:center;">
+              <div style="font-family:var(--font-primary);font-size:2rem;font-weight:700;color:var(--white);">{n}</div>
+              <div style="font-size:0.8rem;color:rgba(255,255,255,0.55);">{l}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="about-section">
+    <div class="container">
+      <p class="eyebrow">What we stand for</p>
+      <h2>Our sustainability commitments</h2>
+      <div class="commitments">
+        {[
+          ['Packaging Philosophy','Every order leaves in recycled, compostable, or reusable materials. We've eliminated single-use plastic entirely from our supply chain.'],
+          ['Supplier Ethics','We only work with suppliers who pay fair wages, respect workers\' rights, and operate transparently. Many hold GOTS, Fair Trade, or B Corp certification.'],
+          ['Carbon Footprint','We measure and offset our Scope 1 and 2 emissions. Working toward full Scope 3 transparency by 2026.'],
+          ['B Corp Journey','We\'re currently completing our B Corp Impact Assessment. We believe businesses should be accountable to people and planet — not just profit.'],
+          ['Circular Economy','Products are chosen for durability and repairability. Packaging instructions included for composting or reuse.'],
+          ['Community Impact','A portion of corporate order profits supports UK food banks and environmental education programmes.'],
+        ].map(([title, body]) => (
+          <div class="commitment">
+            <h4>{title}</h4>
+            <p>{body}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="about-section" style="background:var(--navy);color:var(--white);">
+    <div class="container">
+      <div class="about-grid">
+        <div>
+          <p class="eyebrow" style="color:#7eb3f8;">Our parent company</p>
+          <h2 style="color:var(--white);">One Earth Beyond Ltd</h2>
+          <p style="color:rgba(255,255,255,0.72);">One Earth Gifting is a venture of One Earth Beyond Ltd — a purpose-driven business consultancy helping organisations reduce their environmental impact and build for the long term.</p>
+          <p style="color:rgba(255,255,255,0.72);margin-top:1rem;">Our gifting range is an extension of that mission: proving that premium and sustainable are not in conflict.</p>
+          <a href="https://oneearthbeyond.com" target="_blank" rel="noopener" class="btn btn-outline" style="margin-top:1.5rem;">Visit One Earth Beyond →</a>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:center;">
+          <div style="background:rgba(255,255,255,0.06);border-radius:var(--radius-lg);padding:3rem;text-align:center;">
+            <div style="font-family:var(--font-primary);font-size:1.3rem;font-weight:700;color:var(--white);margin-bottom:0.5rem;">One Earth Beyond</div>
+            <div style="font-size:0.84rem;color:rgba(255,255,255,0.45);">oneearthbeyond.com</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</Layout>

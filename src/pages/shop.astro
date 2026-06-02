@@ -1,0 +1,96 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { products, categories } from '../data/products.js';
+export const prerender = true;
+---
+<Layout title="Shop — One Earth Gifting" description="Browse our full collection of sustainable, ethically sourced gifts.">
+
+  <div style="background:var(--sand);padding:3rem 0;border-bottom:1px solid var(--border);">
+    <div class="container">
+      <p class="eyebrow" style="margin-bottom:0.5rem;">One Earth Gifting</p>
+      <h1>The Collection</h1>
+      <p style="margin-top:0.5rem;">{products.length} sustainably sourced products</p>
+    </div>
+  </div>
+
+  <div class="category-filter" role="navigation" aria-label="Filter by category">
+    <div class="container">
+      <div class="category-filter__inner">
+        {categories.map(c => (
+          <button class={`filter-btn${c.slug === 'all' ? ' active' : ''}`} data-filter={c.slug} aria-pressed={c.slug === 'all' ? 'true' : 'false'}>
+            {c.name}
+          </button>
+        ))}
+      </div>
+    </div>
+  </div>
+
+  <section style="padding:3rem 0;">
+    <div class="container">
+      <div class="products-grid" id="products-grid">
+        {products.map(product => (
+          <div class="product-item visible" data-category={product.categorySlug} data-tags={product.tags.join(',')}>
+            <article class="product-card">
+              <div class="product-card__img">
+                {product.images[0] ? (
+                  <a href={`/products/${product.slug}`} tabindex="-1" aria-hidden="true">
+                    <img src={`/images/${product.images[0]}`} alt={product.name} loading="lazy" width="600" height="450"
+                      onerror="this.parentElement.innerHTML='<div class=\'product-card__img-placeholder\'><svg width=\'36\' height=\'36\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'#ccc\' stroke-width=\'1.5\'><rect x=\'3\' y=\'3\' width=\'18\' height=\'18\' rx=\'2\'/><circle cx=\'8.5\' cy=\'8.5\' r=\'1.5\'/><polyline points=\'21 15 16 10 5 21\'/></svg></div>'">
+                  </a>
+                ) : (
+                  <div class="product-card__img-placeholder">
+                    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                  </div>
+                )}
+                <button class="product-card__wishlist" data-slug={product.slug} aria-label={`Save ${product.name}`}
+                  onclick={`toggleWishlist('${product.slug}', this)`}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                </button>
+              </div>
+              <div class="product-card__body">
+                <p class="product-card__cat">{product.category}</p>
+                <h3 class="product-card__name"><a href={`/products/${product.slug}`}>{product.name}</a></h3>
+                <p class="product-card__desc">{product.description}</p>
+                <div class="product-card__footer">
+                  <span class="product-card__price">£{product.price.toFixed(2)}</span>
+                  <button class="btn btn-primary btn-sm"
+                    onclick={`addToCart({slug:'${product.slug}',name:'${product.name.replace(/'/g,"\\'")}',price:${product.price},image:'/images/${product.images[0] || ''}'})`}
+                    aria-label={`Add ${product.name} to basket`}>
+                    Add to Basket
+                  </button>
+                </div>
+              </div>
+            </article>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+</Layout>
+
+<script>
+  // URL param filter on load
+  const params = new URLSearchParams(window.location.search);
+  const cat = params.get('cat') || 'all';
+  function applyFilter(c) {
+    document.querySelectorAll('.filter-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.filter === c);
+      b.setAttribute('aria-pressed', String(b.dataset.filter === c));
+    });
+    document.querySelectorAll('.product-item').forEach(item => {
+      const match = c === 'all' || item.dataset.category === c || (item.dataset.tags||'').split(',').includes(c);
+      item.classList.toggle('visible', match);
+    });
+  }
+  applyFilter(cat);
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      applyFilter(btn.dataset.filter);
+      history.replaceState(null, '', btn.dataset.filter === 'all' ? '/shop' : `/shop?cat=${btn.dataset.filter}`);
+    });
+  });
+  document.querySelectorAll('.product-card__wishlist').forEach(btn => {
+    if (window.isWishlisted?.(btn.dataset.slug)) btn.classList.add('active');
+  });
+</script>

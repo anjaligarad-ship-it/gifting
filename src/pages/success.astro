@@ -1,0 +1,19 @@
+---
+import Layout from '../layouts/Layout.astro';
+export const prerender = false;
+---
+<Layout title="Order Confirmed — One Earth Gifting">
+  <div class="status-page">
+    <div>
+      <div class="status-page__icon">🌿</div>
+      <h1>Thank you for your order!</h1>
+      <p>Your sustainable gifts are on their way. You'll receive a confirmation email shortly. All orders are dispatched in plastic-free packaging within 1–2 business days.</p>
+      <a href="/shop" class="btn btn-primary">Continue shopping</a>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  // Clear cart on successful checkout
+  try { localStorage.removeItem('oeg_cart'); localStorage.removeItem('oeg_note'); } catch {}
+</script>

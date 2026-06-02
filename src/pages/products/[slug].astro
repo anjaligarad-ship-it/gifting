@@ -1,0 +1,203 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { products, getProductBySlug } from '../../data/products.js';
+
+export async function getStaticPaths() {
+  return products.map(p => ({ params: { slug: p.slug } }));
+}
+
+const { slug } = Astro.params;
+const product = getProductBySlug(slug);
+if (!product) return Astro.redirect('/shop');
+
+const related = products.filter(p => p.categorySlug === product.categorySlug && p.slug !== product.slug).slice(0, 4);
+const mainImage = product.images[0] ? `/images/${product.images[0]}` : null;
+---
+<Layout
+  title={`${product.name} — One Earth Gifting`}
+  description={product.description}
+  image={mainImage || undefined}
+>
+  <!-- JSON-LD Product -->
+  <script type="application/ld+json" set:html={JSON.stringify({
+    "@context": "https://schema.org/",
+    "@type": "Product",
+    "name": product.name,
+    "description": product.description,
+    "image": mainImage ? `https://oneearthgifting.co.uk${mainImage}` : undefined,
+    "brand": { "@type": "Brand", "name": "One Earth Gifting" },
+    "offers": {
+      "@type": "Offer",
+      "price": product.price,
+      "priceCurrency": "GBP",
+      "availability": "https://schema.org/InStock",
+      "url": `https://oneearthgifting.co.uk/products/${product.slug}`
+    }
+  })} />
+
+  <div class="product-page">
+    <div class="container">
+      <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="/">Home</a> <span aria-hidden="true">/</span>
+        <a href="/shop">Shop</a> <span aria-hidden="true">/</span>
+        <a href={`/shop?cat=${product.categorySlug}`}>{product.category}</a> <span aria-hidden="true">/</span>
+        <span aria-current="page">{product.name}</span>
+      </nav>
+
+      <div class="product-page__grid">
+        <!-- Gallery -->
+        <div>
+          <div class="gallery__main">
+            {mainImage ? (
+              <img src={mainImage} alt={product.name} id="main-img" width="900" height="900" loading="eager">
+            ) : (
+              <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:var(--sand);">
+                <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              </div>
+            )}
+          </div>
+          {product.images.length > 1 && (
+            <div class="gallery__thumbs">
+              {product.images.map((img, i) => (
+                <button class={`gallery__thumb${i === 0 ? ' active' : ''}`} data-src={`/images/${img}`} aria-label={`View image ${i + 1}`}>
+                  <img src={`/images/${img}`} alt={`${product.name} view ${i + 1}`} loading="lazy">
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <!-- Info -->
+        <div>
+          <p class="product-info__cat">{product.category}</p>
+          <h1>{product.name}</h1>
+          <p class="product-info__price">£{product.price.toFixed(2)}</p>
+
+          <div class="product-tabs">
+            <div class="product-tabs__nav" role="tablist">
+              <button class="tab-btn active" data-tab="details" role="tab" aria-selected="true">Details</button>
+              <button class="tab-btn" data-tab="sustainability" role="tab" aria-selected="false">Sustainability</button>
+              <button class="tab-btn" data-tab="delivery" role="tab" aria-selected="false">Delivery</button>
+            </div>
+            <div data-tab="details" class="tab-pane active" role="tabpanel">
+              <p>{product.description}</p>
+              <ul style="margin-top:1rem;">
+                {product.details.map(d => <li>{d}</li>)}
+              </ul>
+            </div>
+            <div data-tab="sustainability" class="tab-pane" role="tabpanel">
+              <p>{product.sustainability}</p>
+              <ul style="margin-top:0.75rem;">
+                <li>Plastic-free packaging</li>
+                <li>1% of sale donated via 1% for the Planet</li>
+                <li>Ethically sourced supply chain</li>
+              </ul>
+            </div>
+            <div data-tab="delivery" class="tab-pane" role="tabpanel">
+              <ul>
+                <li>Free standard UK delivery on orders over £40</li>
+                <li>Standard delivery (3–5 working days): £3.95</li>
+                <li>Express delivery (1–2 working days): £6.95</li>
+                <li>All orders dispatched in plastic-free packaging</li>
+                <li>Free 30-day returns</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="product-actions">
+            <button
+              class="btn btn-primary"
+              id="atc-btn"
+              aria-label={`Add ${product.name} to basket`}
+              data-product={JSON.stringify({ slug: product.slug, name: product.name, price: product.price, image: mainImage || '' })}
+            >
+              Add to Basket
+            </button>
+            <button class="wishlist-btn" id="wl-btn" aria-label="Save to wishlist" data-slug={product.slug}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            </button>
+          </div>
+
+          <div class="product-trust">
+            <span>🌿 Plastic-free packaging</span>
+            <span>🔒 Secure Stripe checkout</span>
+            <span>↩️ Free 30-day returns</span>
+            <span>🌍 1% for the Planet</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {related.length > 0 && (
+    <section style="background:var(--sand);padding:4rem 0;" aria-label="You might also like">
+      <div class="container">
+        <h2 style="margin-bottom:2rem;">You might also like</h2>
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:1.5rem;" class="related-grid">
+          {related.map(p => (
+            <article class="product-card">
+              <div class="product-card__img">
+                {p.images[0] ? (
+                  <a href={`/products/${p.slug}`} tabindex="-1" aria-hidden="true">
+                    <img src={`/images/${p.images[0]}`} alt={p.name} loading="lazy" width="300" height="225"
+                      onerror="this.parentElement.innerHTML='<div class=\'product-card__img-placeholder\'></div>'">
+                  </a>
+                ) : <div class="product-card__img-placeholder"></div>}
+              </div>
+              <div class="product-card__body">
+                <p class="product-card__cat">{p.category}</p>
+                <h3 class="product-card__name"><a href={`/products/${p.slug}`}>{p.name}</a></h3>
+                <div class="product-card__footer">
+                  <span class="product-card__price">£{p.price.toFixed(2)}</span>
+                  <button class="btn btn-primary btn-sm"
+                    onclick={`addToCart({slug:'${p.slug}',name:'${p.name.replace(/'/g,"\\'")}',price:${p.price},image:'/images/${p.images[0]||''}'})`}>
+                    Add to Basket
+                  </button>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+  )}
+</Layout>
+
+<script>
+  // Gallery thumbs
+  document.querySelectorAll('.gallery__thumb').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.gallery__thumb').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const main = document.getElementById('main-img');
+      if (main) main.src = btn.dataset.src;
+    });
+  });
+
+  // Tabs
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => { b.classList.remove('active'); b.setAttribute('aria-selected','false'); });
+      document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      btn.setAttribute('aria-selected','true');
+      document.querySelector(`.tab-pane[data-tab="${btn.dataset.tab}"]`)?.classList.add('active');
+    });
+  });
+
+  // Add to cart
+  document.getElementById('atc-btn')?.addEventListener('click', function() {
+    const product = JSON.parse(this.dataset.product);
+    window.addToCart?.(product);
+  });
+
+  // Wishlist
+  const slug = document.getElementById('wl-btn')?.dataset.slug;
+  const wlBtn = document.getElementById('wl-btn');
+  if (slug && wlBtn && window.isWishlisted?.(slug)) wlBtn.classList.add('active');
+  wlBtn?.addEventListener('click', () => window.toggleWishlist?.(slug, wlBtn));
+</script>
+
+<style>
+@media (min-width: 768px) { .related-grid { grid-template-columns: repeat(4,1fr) !important; } }
+</style>

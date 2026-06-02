@@ -1,0 +1,17 @@
+---
+import Layout from '../layouts/Layout.astro';
+export const prerender = true;
+---
+<Layout title="Your Basket — One Earth Gifting">
+  <div class="container" style="padding:3rem 0;max-width:760px;">
+    <h1 style="margin-bottom:2rem;">Your Basket</h1>
+    <div id="cart-page-content">
+      <p style="text-align:center;padding:3rem 0;color:var(--text-light);font-style:italic;">Your basket is empty.</p>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  // Cart page just opens the drawer — the real cart lives in localStorage
+  window.addEventListener('load', () => window.openCart?.());
+</script>
