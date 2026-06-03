@@ -1,4 +1,6 @@
 ---
+import '../styles/global.css';
+
 export interface Props {
   title?: string;
   description?: string;
@@ -6,7 +8,7 @@ export interface Props {
 }
 const {
   title = 'One Earth Gifting — Sustainable Gifts',
-  description = 'Curated sustainable gifts for individuals and businesses. Ethically sourced, plastic-free packaged, 1% for the Planet member.',
+  description = 'Curated sustainable gifts for individuals and businesses. Ethically sourced, plastic free packaged. One tree planted with every order.',
   image = '/og-image.jpg',
 } = Astro.props;
 
@@ -53,8 +55,6 @@ const canonical = new URL(Astro.url.pathname, Astro.site).href;
   }
   </script>
 
-  <link rel="stylesheet" href="/src/styles/global.css">
-  <!-- In production Astro inlines/bundles this automatically -->
 </head>
 <body>
   <a href="#main" class="visually-hidden" style="position:fixed;top:1rem;left:1rem;z-index:9999;padding:0.5rem 1rem;background:var(--forest);color:#fff;border-radius:4px;font-family:var(--font-primary);">
@@ -62,21 +62,6 @@ const canonical = new URL(Astro.url.pathname, Astro.site).href;
   </a>
 
   <slot name="before-header" />
-
-  <!-- Announcement bar -->
-  <div class="announcement-bar" aria-label="Site announcements">
-    <div class="announcement-bar__track">
-      <span class="announcement-bar__item">🌿 Free UK delivery on orders over £40</span>
-      <span class="announcement-bar__item">📦 B2B bulk discounts from 10 units — <a href="/corporate" style="color:rgba(255,255,255,0.8);text-decoration:underline;">Get a Quote</a></span>
-      <span class="announcement-bar__item">🌍 1% for the Planet member</span>
-      <span class="announcement-bar__item">♻️ All packaging plastic-free &amp; compostable</span>
-      <!-- duplicate for seamless loop -->
-      <span class="announcement-bar__item" aria-hidden="true">🌿 Free UK delivery on orders over £40</span>
-      <span class="announcement-bar__item" aria-hidden="true">📦 B2B bulk discounts from 10 units — <a href="/corporate" style="color:rgba(255,255,255,0.8);text-decoration:underline;">Get a Quote</a></span>
-      <span class="announcement-bar__item" aria-hidden="true">🌍 1% for the Planet member</span>
-      <span class="announcement-bar__item" aria-hidden="true">♻️ All packaging plastic-free &amp; compostable</span>
-    </div>
-  </div>
 
   <!-- Header -->
   <header class="site-header" role="banner">
@@ -87,16 +72,14 @@ const canonical = new URL(Astro.url.pathname, Astro.site).href;
         </button>
 
         <a href="/" class="site-header__logo" aria-label="One Earth Gifting — Home">
-          <span class="logo-name">One Earth Gifting</span>
-          <span class="logo-sub">A venture of One Earth Beyond</span>
+          <img src="/Logo/logo.png" alt="One Earth Gifting" class="site-logo">
         </a>
 
         <nav class="site-nav" aria-label="Main navigation">
           <a href="/shop">Shop</a>
-          <a href="/shop?cat=gift-sets">Gift Sets</a>
           <a href="/corporate">Corporate Gifting</a>
           <a href="/about#sustainability">Sustainability</a>
-          <a href="/about">About</a>
+          <a href="/our-artist">Our Artists</a>
         </nav>
 
         <div class="header-actions">
@@ -113,26 +96,17 @@ const canonical = new URL(Astro.url.pathname, Astro.site).href;
     </div>
   </header>
 
-  <!-- B2B Banner -->
-  <div class="b2b-banner" role="complementary" aria-label="Corporate gifting offer">
-    <div class="b2b-banner__inner">
-      <p class="b2b-banner__text">🏢 Corporate clients: <strong>20% off 50+ units</strong> — branded gift sets, bulk orders, dedicated account manager</p>
-      <a href="/corporate" class="btn btn-terracotta btn-sm">Get a Quote →</a>
-    </div>
-  </div>
-
   <!-- Mobile Nav -->
   <nav class="mobile-nav" id="mobile-nav" aria-hidden="true" aria-label="Mobile navigation">
     <div class="mobile-nav__top">
-      <span class="logo-name">One Earth Gifting</span>
+      <img src="/Logo/logo.png" alt="One Earth Gifting" class="site-logo">
       <button class="icon-btn" id="menu-close" aria-label="Close menu">✕</button>
     </div>
     <div class="mobile-nav__links">
       <a href="/shop">Shop</a>
-      <a href="/shop?cat=gift-sets">Gift Sets</a>
       <a href="/corporate">Corporate Gifting</a>
       <a href="/about#sustainability">Sustainability</a>
-      <a href="/about">About</a>
+      <a href="/our-artist">Our Artists</a>
     </div>
     <div class="mobile-nav__cta">
       <a href="/corporate" class="btn btn-terracotta" style="width:100%;justify-content:center;">Corporate Enquiry</a>
@@ -176,10 +150,12 @@ const canonical = new URL(Astro.url.pathname, Astro.site).href;
     <div class="container">
       <div class="site-footer__grid">
         <div class="footer-col">
-          <div class="footer-logo">One Earth Gifting</div>
+          <div class="footer-logo">
+            <img src="/Logo/logo.png" alt="One Earth Gifting" class="footer-logo-img">
+          </div>
           <p>Sustainably sourced gifts for people who care. Curated with love, packaged with purpose.</p>
           <div class="footer-certs">
-            <span class="cert">1% Planet</span>
+            <span class="cert">1 Tree Per Order</span>
             <span class="cert">Plastic-Free</span>
             <span class="cert">B Corp Journey</span>
             <span class="cert">GOTS</span>
@@ -192,9 +168,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site).href;
           <h3 class="footer-col__heading">Shop</h3>
           <nav class="footer-links" aria-label="Shop links">
             <a href="/shop">All Products</a>
-            <a href="/shop?cat=wellness-spa">Wellness &amp; Spa</a>
-            <a href="/shop?cat=kitchen-food">Kitchen &amp; Food</a>
-            <a href="/shop?cat=home-living">Home &amp; Living</a>
+            <a href="/shop?cat=home-living">Home and Living</a>
             <a href="/shop?cat=stationery">Stationery</a>
             <a href="/shop?cat=gift-sets">Gift Sets</a>
           </nav>
@@ -235,7 +209,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site).href;
 
   <script>
     // ── Helpers ──────────────────────────────────────
-    const FREE_THRESHOLD = 40;
+    const FREE_QTY = 20;
     const $ = id => document.getElementById(id);
     function toast(msg, type = 'success') {
       const t = $('toast');
@@ -311,9 +285,10 @@ const canonical = new URL(Astro.url.pathname, Astro.site).href;
       if (!body) return;
 
       const total = cart.reduce((s, i) => s + i.price * i.qty, 0);
-      const remaining = Math.max(0, FREE_THRESHOLD - total);
-      const pct = Math.min(100, (total / FREE_THRESHOLD) * 100);
-      const freeLabel = remaining === 0 ? '🎉 You have free UK delivery!' : `${fmt(remaining)} away from free delivery`;
+      const totalQty = cart.reduce((s, i) => s + i.qty, 0);
+      const remaining = Math.max(0, FREE_QTY - totalQty);
+      const pct = Math.min(100, (totalQty / FREE_QTY) * 100);
+      const freeLabel = remaining === 0 ? '🎉 You have free UK delivery!' : `${remaining} more item${remaining !== 1 ? 's' : ''} for free delivery`;
 
       const shippingHTML = `
         <div class="shipping-bar">

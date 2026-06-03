@@ -49,21 +49,21 @@ export async function POST({ request }) {
           shipping_rate_data: {
             type: 'fixed_amount',
             fixed_amount: { amount: 0, currency: 'gbp' },
-            display_name: 'Free UK delivery (orders over £40)',
+            display_name: 'Free UK delivery (orders of 20 or more items)',
           },
         },
         {
           shipping_rate_data: {
             type: 'fixed_amount',
             fixed_amount: { amount: 395, currency: 'gbp' },
-            display_name: 'Standard delivery (3–5 working days)',
+            display_name: 'Standard delivery (3 to 5 working days)',
           },
         },
         {
           shipping_rate_data: {
             type: 'fixed_amount',
             fixed_amount: { amount: 695, currency: 'gbp' },
-            display_name: 'Express delivery (1–2 working days)',
+            display_name: 'Express delivery (1 to 2 working days)',
           },
         },
       ],
@@ -72,7 +72,7 @@ export async function POST({ request }) {
         source: 'one-earth-gifting',
       },
       custom_text: {
-        submit: { message: 'Packaged plastic-free and dispatched within 1–2 business days.' },
+        submit: { message: 'Packaged plastic free and dispatched within 1 to 2 business days.' },
       },
       allow_promotion_codes: true,
     });

@@ -14,7 +14,7 @@ const related = products.filter(p => p.categorySlug === product.categorySlug && 
 const mainImage = product.images[0] ? `/images/${product.images[0]}` : null;
 ---
 <Layout
-  title={`${product.name} — One Earth Gifting`}
+  title={`${product.name} | One Earth Gifting`}
   description={product.description}
   image={mainImage || undefined}
 >
@@ -71,7 +71,11 @@ const mainImage = product.images[0] ? `/images/${product.images[0]}` : null;
         <div>
           <p class="product-info__cat">{product.category}</p>
           <h1>{product.name}</h1>
-          <p class="product-info__price">£{product.price.toFixed(2)}</p>
+          {product.comingSoon ? (
+            <span class="coming-soon-badge" style="font-size:0.8rem;padding:0.4rem 1.1rem;margin:0.75rem 0 1.5rem;display:inline-block;">Coming Soon</span>
+          ) : (
+            <p class="product-info__price">£{product.price.toFixed(2)}</p>
+          )}
 
           <div class="product-tabs">
             <div class="product-tabs__nav" role="tablist">
@@ -88,41 +92,48 @@ const mainImage = product.images[0] ? `/images/${product.images[0]}` : null;
             <div data-tab="sustainability" class="tab-pane" role="tabpanel">
               <p>{product.sustainability}</p>
               <ul style="margin-top:0.75rem;">
-                <li>Plastic-free packaging</li>
-                <li>1% of sale donated via 1% for the Planet</li>
+                <li>Plastic free packaging</li>
+                <li>One tree planted per order via local NGO partners</li>
                 <li>Ethically sourced supply chain</li>
               </ul>
             </div>
             <div data-tab="delivery" class="tab-pane" role="tabpanel">
               <ul>
-                <li>Free standard UK delivery on orders over £40</li>
-                <li>Standard delivery (3–5 working days): £3.95</li>
-                <li>Express delivery (1–2 working days): £6.95</li>
-                <li>All orders dispatched in plastic-free packaging</li>
-                <li>Free 30-day returns</li>
+                <li>Free UK delivery on orders of 20 or more items</li>
+                <li>Standard delivery (3 to 5 working days): £3.95</li>
+                <li>Express delivery (1 to 2 working days): £6.95</li>
+                <li>All orders dispatched in plastic free packaging</li>
+                <li>Free 30 day returns</li>
               </ul>
             </div>
           </div>
 
-          <div class="product-actions">
-            <button
-              class="btn btn-primary"
-              id="atc-btn"
-              aria-label={`Add ${product.name} to basket`}
-              data-product={JSON.stringify({ slug: product.slug, name: product.name, price: product.price, image: mainImage || '' })}
-            >
-              Add to Basket
-            </button>
-            <button class="wishlist-btn" id="wl-btn" aria-label="Save to wishlist" data-slug={product.slug}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-            </button>
-          </div>
+          {product.comingSoon ? (
+            <div class="corporate-cta-box">
+              <p>Taking corporate orders now. Minimum order: 20 sets.</p>
+              <a href="mailto:hello@oneearthbeyond.com" class="btn btn-terracotta">Order via hello@oneearthbeyond.com</a>
+            </div>
+          ) : (
+            <div class="product-actions">
+              <button
+                class="btn btn-primary"
+                id="atc-btn"
+                aria-label={`Add ${product.name} to basket`}
+                data-product={JSON.stringify({ slug: product.slug, name: product.name, price: product.price, image: mainImage || '' })}
+              >
+                Add to Basket
+              </button>
+              <button class="wishlist-btn" id="wl-btn" aria-label="Save to wishlist" data-slug={product.slug}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+              </button>
+            </div>
+          )}
 
           <div class="product-trust">
             <span>🌿 Plastic-free packaging</span>
             <span>🔒 Secure Stripe checkout</span>
             <span>↩️ Free 30-day returns</span>
-            <span>🌍 1% for the Planet</span>
+            <span>🌳 One tree per order</span>
           </div>
         </div>
       </div>
