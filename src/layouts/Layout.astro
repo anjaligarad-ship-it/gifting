@@ -45,7 +45,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site).href;
     "@context": "https://schema.org",
     "@type": "Organization",
     "name": "One Earth Gifting",
-    "url": "https://oneearthgifting.co.uk",
+    "url": "https://oneearthgifting.com",
     "description": "Sustainable gifting for individuals and businesses",
     "parentOrganization": {
       "@type": "Organization",
@@ -126,12 +126,30 @@ const canonical = new URL(Astro.url.pathname, Astro.site).href;
       <div class="cart-empty">Your basket is empty</div>
     </div>
     <div class="cart-drawer__footer">
+      <div class="cart-customer-form">
+        <div class="form-group">
+          <label for="cust-name">Full name *</label>
+          <input type="text" id="cust-name" required autocomplete="name">
+        </div>
+        <div class="form-group">
+          <label for="cust-email">Email *</label>
+          <input type="email" id="cust-email" required autocomplete="email">
+        </div>
+        <div class="form-group">
+          <label for="cust-phone">Contact number *</label>
+          <input type="tel" id="cust-phone" required autocomplete="tel">
+        </div>
+        <div class="form-group">
+          <label for="cust-address">Delivery address *</label>
+          <textarea id="cust-address" required autocomplete="street-address" placeholder="Address line, city, postcode"></textarea>
+        </div>
+      </div>
       <div class="cart-subtotal">
         <span class="cart-subtotal__label">Subtotal</span>
         <span class="cart-subtotal__amount" id="cart-total">£0.00</span>
       </div>
       <button class="btn btn-primary cart-checkout-btn" id="checkout-btn">
-        Checkout Securely →
+        Pay with Card →
       </button>
       <p class="cart-secure">🔒 Secure checkout via Stripe · Free returns · Plastic-free packaging</p>
     </div>
@@ -196,7 +214,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site).href;
       <div class="site-footer__bottom">
         <span>© {new Date().getFullYear()} One Earth Beyond Ltd</span>
         <span class="footer-dot">·</span>
-        <span>oneearthgifting.co.uk</span>
+        <span>oneearthgifting.com</span>
         <span class="footer-dot">·</span>
         <span>A venture of <a href="https://oneearthbeyond.com" target="_blank" rel="noopener">oneearthbeyond.com</a></span>
         <span class="footer-dot">·</span>
@@ -254,11 +272,48 @@ const canonical = new URL(Astro.url.pathname, Astro.site).href;
     function getNote() { try { return localStorage.getItem('oeg_note') || ''; } catch { return ''; } }
     function saveNote(n) { try { localStorage.setItem('oeg_note', n); } catch {} }
 
+    // ── Customer details (mandatory for checkout) ─────
+    const CUSTOMER_KEY = 'oeg_customer';
+    function getCustomer() { try { return JSON.parse(localStorage.getItem(CUSTOMER_KEY) || '{}'); } catch { return {}; } }
+    function saveCustomer(c) { try { localStorage.setItem(CUSTOMER_KEY, JSON.stringify(c)); } catch {} }
+    function loadCustomerForm() {
+      const c = getCustomer();
+      if ($('cust-name')) $('cust-name').value = c.name || '';
+      if ($('cust-email')) $('cust-email').value = c.email || '';
+      if ($('cust-phone')) $('cust-phone').value = c.phone || '';
+      if ($('cust-address')) $('cust-address').value = c.address || '';
+    }
+    function readCustomerForm() {
+      const customer = {
+        name: $('cust-name')?.value.trim() || '',
+        email: $('cust-email')?.value.trim() || '',
+        phone: $('cust-phone')?.value.trim() || '',
+        address: $('cust-address')?.value.trim() || '',
+      };
+      saveCustomer(customer);
+      return customer;
+    }
+    function validateCustomer(customer) {
+      if (!customer.name || !customer.email || !customer.phone || !customer.address) {
+        toast('Please fill in your name, email, contact number and address', 'error');
+        return false;
+      }
+      if (!/^\S+@\S+\.\S+$/.test(customer.email)) {
+        toast('Please enter a valid email address', 'error');
+        return false;
+      }
+      return true;
+    }
+    ['cust-name', 'cust-email', 'cust-phone', 'cust-address'].forEach(id => {
+      document.getElementById(id)?.addEventListener('change', readCustomerForm);
+    });
+
     function openCart() {
       $('cart-drawer')?.classList.add('open');
       overlay?.classList.add('active');
       document.body.style.overflow = 'hidden';
       renderCart();
+      loadCustomerForm();
     }
     function closeCart() {
       $('cart-drawer')?.classList.remove('open');
@@ -368,22 +423,24 @@ const canonical = new URL(Astro.url.pathname, Astro.site).href;
     $('checkout-btn')?.addEventListener('click', async () => {
       const cart = getCart();
       if (cart.length === 0) { toast('Your basket is empty', 'error'); return; }
+      const customer = readCustomerForm();
+      if (!validateCustomer(customer)) return;
       const btn = $('checkout-btn');
       btn.disabled = true;
-      btn.textContent = 'Redirecting to checkout…';
+      btn.textContent = 'Redirecting…';
       try {
         const res = await fetch('/api/create-checkout', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ items: cart, note: getNote() }),
+          body: JSON.stringify({ items: cart, note: getNote(), customer }),
         });
         const { url, error } = await res.json();
         if (url) window.location.href = url;
-        else { toast(error || 'Checkout failed — please try again', 'error'); btn.disabled = false; btn.textContent = 'Checkout Securely →'; }
+        else { toast(error || 'Checkout failed — please try again', 'error'); btn.disabled = false; btn.textContent = 'Pay with Card →'; }
       } catch {
         toast('Network error — please try again', 'error');
         btn.disabled = false;
-        btn.textContent = 'Checkout Securely →';
+        btn.textContent = 'Pay with Card →';
       }
     });
 

@@ -180,7 +180,7 @@ export const prerender = true;
       // Fallback — mailto
       const subject = `Corporate Gifting Enquiry from ${data.company}`;
       const body = Object.entries(data).map(([k,v]) => `${k}: ${v}`).join('\n');
-      window.location.href = `mailto:hello@oneearthgifting.co.uk?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+      window.location.href = `mailto:hello@oneearthgifting.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     } finally {
       btn.disabled = false;
       btn.textContent = 'Send Enquiry →';

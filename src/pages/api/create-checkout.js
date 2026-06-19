@@ -8,17 +8,25 @@ export const prerender = false;
 
 export async function POST({ request }) {
   const stripe = new Stripe(import.meta.env.STRIPE_SECRET_KEY);
-  const siteUrl = import.meta.env.PUBLIC_SITE_URL || 'https://oneearthgifting.co.uk';
+  const siteUrl = import.meta.env.PUBLIC_SITE_URL || 'https://oneearthgifting.com';
 
-  let items, note;
+  let items, note, customer;
   try {
-    ({ items, note } = await request.json());
+    ({ items, note, customer } = await request.json());
   } catch {
     return new Response(JSON.stringify({ error: 'Invalid request body' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
   }
 
   if (!items || items.length === 0) {
     return new Response(JSON.stringify({ error: 'Cart is empty' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+  }
+
+  if (!customer || !customer.name?.trim() || !customer.email?.trim() || !customer.phone?.trim() || !customer.address?.trim()) {
+    return new Response(JSON.stringify({ error: 'Name, email, contact number and address are required' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+  }
+
+  if (!/^\S+@\S+\.\S+$/.test(customer.email.trim())) {
+    return new Response(JSON.stringify({ error: 'Please enter a valid email address' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
   }
 
   // Build Stripe line items
@@ -28,7 +36,7 @@ export async function POST({ request }) {
       currency: 'gbp',
       product_data: {
         name: item.name,
-        images: item.image ? [`${siteUrl}${item.image}`] : [],
+        images: item.image ? [encodeURI(`${siteUrl}${item.image}`)] : [],
         metadata: { slug: item.slug },
       },
       unit_amount: Math.round(item.price * 100), // pence
@@ -38,9 +46,10 @@ export async function POST({ request }) {
 
   try {
     const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
+      payment_method_types: ['card', 'link'],
       line_items: lineItems,
       mode: 'payment',
+      customer_email: customer.email,
       success_url: `${siteUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${siteUrl}/cart`,
       shipping_address_collection: { allowed_countries: ['GB'] },
@@ -70,6 +79,10 @@ export async function POST({ request }) {
       metadata: {
         gift_note: note || '',
         source: 'one-earth-gifting',
+        customer_name: customer.name,
+        customer_email: customer.email,
+        customer_phone: customer.phone,
+        customer_address: customer.address,
       },
       custom_text: {
         submit: { message: 'Packaged plastic free and dispatched within 1 to 2 business days.' },

@@ -24,14 +24,14 @@ const mainImage = product.images[0] ? `/images/${product.images[0]}` : null;
     "@type": "Product",
     "name": product.name,
     "description": product.description,
-    "image": mainImage ? `https://oneearthgifting.co.uk${mainImage}` : undefined,
+    "image": mainImage ? `https://oneearthgifting.com${mainImage}` : undefined,
     "brand": { "@type": "Brand", "name": "One Earth Gifting" },
     "offers": {
       "@type": "Offer",
       "price": product.price,
       "priceCurrency": "GBP",
       "availability": "https://schema.org/InStock",
-      "url": `https://oneearthgifting.co.uk/products/${product.slug}`
+      "url": `https://oneearthgifting.com/products/${product.slug}`
     }
   })} />
 

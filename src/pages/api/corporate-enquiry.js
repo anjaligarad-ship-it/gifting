@@ -12,8 +12,8 @@ export async function POST({ request }) {
     // import { Resend } from 'resend';
     // const resend = new Resend(import.meta.env.RESEND_API_KEY);
     // await resend.emails.send({
-    //   from: 'noreply@oneearthgifting.co.uk',
-    //   to: 'hello@oneearthgifting.co.uk',
+    //   from: 'noreply@oneearthgifting.com',
+    //   to: 'hello@oneearthgifting.com',
     //   subject: `Corporate Enquiry — ${data.company}`,
     //   text: Object.entries(data).map(([k,v]) => `${k}: ${v}`).join('\n'),
     // });
