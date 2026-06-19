@@ -35,6 +35,10 @@ function lineItemsRows(lineItems) {
     .join('');
 }
 
+function lineItemsText(lineItems) {
+  return lineItems.map((li) => `- ${li.description} x${li.quantity} — ${fmtGBP(li.amount_total)}`).join('\n');
+}
+
 export async function sendOrderEmails({ session, lineItems, customer }) {
   const orderRef = session.id;
   const total = fmtGBP(session.amount_total);
@@ -68,6 +72,7 @@ export async function sendOrderEmails({ session, lineItems, customer }) {
         <p><strong>Delivery address:</strong><br>${customer.address.replace(/\n/g, '<br>')}</p>
         <p>We'll let you know once it's on its way. Thank you for choosing sustainable gifting!</p>
       `,
+      text: `Thank you for your order, ${customer.name}!\n\nWe've received your payment and your order is being prepared.\n\n${lineItemsText(lineItems)}\n\nTotal paid: ${total}\nDelivery address: ${customer.address}\n\nWe'll let you know once it's on its way. Thank you for choosing sustainable gifting!`,
     });
   }
 
@@ -83,5 +88,6 @@ export async function sendOrderEmails({ session, lineItems, customer }) {
       <p><strong>Stripe session ID:</strong> ${orderRef}</p>
       <p><strong>Payment status:</strong> ${session.payment_status}</p>
     `,
+    text: `New order received\n\nName: ${customer.name}\nEmail: ${customer.email}\nPhone: ${customer.phone}\nDelivery address: ${customer.address}\n${customer.note ? `Gift note: ${customer.note}\n` : ''}\n${lineItemsText(lineItems)}\n\nTotal paid: ${total}\nStripe session ID: ${orderRef}\nPayment status: ${session.payment_status}`,
   });
 }
