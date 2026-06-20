@@ -45,7 +45,7 @@ export const prerender = true;
   import { supabase } from '../lib/supabaseClient.js';
 
   const params = new URLSearchParams(window.location.search);
-  const redirectTo = params.get('redirect') || '/account/profile';
+  const redirectTo = params.get('redirect') || '/shop';
 
   document.getElementById('login-form')?.addEventListener('submit', async (e) => {
     e.preventDefault();

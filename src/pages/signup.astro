@@ -81,7 +81,7 @@ export const prerender = true;
   document.getElementById('google-btn')?.addEventListener('click', async () => {
     await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: `${window.location.origin}/account/profile` },
+      options: { redirectTo: `${window.location.origin}/shop` },
     });
   });
 </script>
