@@ -278,6 +278,12 @@ p  { color: var(--text-mid); line-height: 1.75; }
 .shipping-bar__label span { color: var(--forest); }
 .shipping-bar__track { height: 4px; background: var(--border); border-radius: 100px; overflow: hidden; }
 .shipping-bar__fill { height: 100%; background: linear-gradient(to right, var(--forest), var(--terracotta)); border-radius: 100px; transition: width 0.4s ease; }
+.shipping-methods { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1.25rem; }
+.shipping-method { display: flex; align-items: center; justify-content: space-between; padding: 0.6rem 0.85rem; border: 1px solid var(--border); border-radius: var(--radius-md); font-family: var(--font-primary); font-size: 0.78rem; }
+.shipping-method__name { color: var(--text-mid); }
+.shipping-method__price { font-weight: 700; color: var(--forest); }
+.shipping-method--frozen { opacity: 0.45; background: var(--sand); cursor: not-allowed; }
+.shipping-method--frozen .shipping-method__price { color: var(--text-light); }
 .cart-item { display: flex; gap: 1rem; padding: 1rem 0; border-bottom: 1px solid var(--border); }
 .cart-item__img { width: 68px; height: 68px; border-radius: var(--radius-md); object-fit: cover; background: var(--sand); flex-shrink: 0; }
 .cart-item__details { flex: 1; min-width: 0; }

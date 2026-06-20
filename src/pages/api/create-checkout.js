@@ -6,6 +6,8 @@ import Stripe from 'stripe';
 
 export const prerender = false;
 
+const FREE_DELIVERY_THRESHOLD = 50;
+
 export async function POST({ request }) {
   const stripe = new Stripe(import.meta.env.STRIPE_SECRET_KEY);
   const siteUrl = import.meta.env.PUBLIC_SITE_URL || 'https://oneearthgifting.com';
@@ -28,6 +30,8 @@ export async function POST({ request }) {
   if (!/^\S+@\S+\.\S+$/.test(customer.email.trim())) {
     return new Response(JSON.stringify({ error: 'Please enter a valid email address' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
   }
+
+  const subtotal = items.reduce((s, item) => s + item.price * item.qty, 0);
 
   // Build Stripe line items
   // If you have Stripe Price IDs set, use them. Otherwise use price_data (simpler, no product setup needed).
@@ -54,13 +58,15 @@ export async function POST({ request }) {
       cancel_url: `${siteUrl}/cart`,
       shipping_address_collection: { allowed_countries: ['GB'] },
       shipping_options: [
-        {
-          shipping_rate_data: {
-            type: 'fixed_amount',
-            fixed_amount: { amount: 0, currency: 'gbp' },
-            display_name: 'Free UK delivery (orders of 20 or more items)',
-          },
-        },
+        ...(subtotal >= FREE_DELIVERY_THRESHOLD
+          ? [{
+              shipping_rate_data: {
+                type: 'fixed_amount',
+                fixed_amount: { amount: 0, currency: 'gbp' },
+                display_name: 'Free delivery over £50',
+              },
+            }]
+          : []),
         {
           shipping_rate_data: {
             type: 'fixed_amount',
