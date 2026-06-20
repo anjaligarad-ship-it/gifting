@@ -1,0 +1,52 @@
+---
+import Layout from '../../layouts/Layout.astro';
+export const prerender = true;
+---
+<Layout title="Order History | One Earth Gifting" description="View your order history.">
+  <section class="corp-form-section">
+    <div class="container" style="max-width:680px;">
+      <p class="eyebrow">My Account</p>
+      <h2>Order History</h2>
+      <div id="orders-list" style="margin-top:2rem;"><p class="cart-empty">Loading your orders…</p></div>
+    </div>
+  </section>
+</Layout>
+
+<script>
+  import { supabase } from '../../lib/supabaseClient.js';
+
+  function fmtGBP(n) { return '£' + Number(n).toFixed(2).replace(/\.00$/, ''); }
+
+  const { data: { session } } = await supabase.auth.getSession();
+
+  if (!session) {
+    window.location.href = '/login?redirect=/account/orders';
+  } else {
+    const list = document.getElementById('orders-list');
+    const { data: orders, error } = await supabase
+      .from('orders')
+      .select('*')
+      .eq('user_id', session.user.id)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      list.innerHTML = `<p class="cart-empty">Could not load orders — please try again later.</p>`;
+    } else if (!orders || orders.length === 0) {
+      list.innerHTML = `<p class="cart-empty">No orders yet — once you place an order, it will show up here.</p>`;
+    } else {
+      list.innerHTML = orders.map(o => {
+        const date = new Date(o.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+        const items = (o.items || []).map(i => `${i.name} x${i.qty}`).join(', ');
+        return `
+          <div class="order-card">
+            <div class="order-card__row">
+              <span class="order-card__date">${date}</span>
+              <span class="order-card__total">${fmtGBP(o.total)}</span>
+            </div>
+            <div class="order-card__items">${items}</div>
+            <div class="order-card__status">${o.status}</div>
+          </div>`;
+      }).join('');
+    }
+  }
+</script>

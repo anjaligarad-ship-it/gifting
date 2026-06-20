@@ -4,6 +4,7 @@
 
 import Stripe from 'stripe';
 import { sendOrderEmails } from '../../lib/email.js';
+import { supabaseAdmin } from '../../lib/supabaseAdmin.js';
 
 export const prerender = false;
 
@@ -35,6 +36,32 @@ export async function POST({ request }) {
       };
 
       await sendOrderEmails({ session, lineItems: lineItems.data, customer });
+
+      const userId = session.metadata?.user_id || null;
+      const { error: orderError } = await supabaseAdmin.from('orders').insert({
+        user_id: userId || null,
+        stripe_session_id: session.id,
+        items: lineItems.data.map((li) => ({
+          name: li.description,
+          qty: li.quantity,
+          amount_total: li.amount_total,
+        })),
+        total: session.amount_total / 100,
+        currency: session.currency,
+        status: session.payment_status,
+        customer_name: customer.name,
+        customer_email: customer.email,
+        customer_phone: customer.phone,
+        customer_address: customer.address,
+      });
+      if (orderError) console.error('Failed to insert order:', orderError.message);
+
+      if (userId) {
+        const { error: cartClearError } = await supabaseAdmin
+          .from('carts')
+          .upsert({ user_id: userId, items: [], note: '', updated_at: new Date().toISOString() });
+        if (cartClearError) console.error('Failed to clear cart after order:', cartClearError.message);
+      }
     } catch (err) {
       console.error('Failed to process checkout.session.completed:', err.message);
     }

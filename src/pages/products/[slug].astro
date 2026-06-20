@@ -114,19 +114,26 @@ const mainImage = product.images[0] ? `/images/${product.images[0]}` : null;
               <a href="mailto:hello@oneearthbeyond.com" class="btn btn-terracotta">Order via hello@oneearthbeyond.com</a>
             </div>
           ) : (
-            <div class="product-actions">
-              <button
-                class="btn btn-primary"
-                id="atc-btn"
-                aria-label={`Add ${product.name} to basket`}
-                data-product={JSON.stringify({ slug: product.slug, name: product.name, price: product.price, image: mainImage || '' })}
-              >
-                Add to Basket
-              </button>
-              <button class="wishlist-btn" id="wl-btn" aria-label="Save to wishlist" data-slug={product.slug}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-              </button>
-            </div>
+            <>
+              {product.deliveryNotice && (
+                <div class="delivery-notice">📦 {product.deliveryNotice}</div>
+              )}
+              <div class="product-actions" data-restricted-to={product.restrictedTo || ''}>
+                <button
+                  class="btn btn-primary"
+                  id="atc-btn"
+                  aria-label={`Add ${product.name} to basket`}
+                  data-product={JSON.stringify({ slug: product.slug, name: product.name, price: product.price, image: mainImage || '' })}
+                  hidden={!!product.restrictedTo}
+                >
+                  {product.preOrder ? 'Pre-order Now' : 'Add to Basket'}
+                </button>
+                <p id="restricted-msg" hidden={!product.restrictedTo} style="color:var(--text-light);font-style:italic;">Checking access…</p>
+                <button class="wishlist-btn" id="wl-btn" aria-label="Save to wishlist" data-slug={product.slug}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                </button>
+              </div>
+            </>
           )}
 
           <div class="product-trust">
@@ -175,6 +182,26 @@ const mainImage = product.images[0] ? `/images/${product.images[0]}` : null;
 </Layout>
 
 <script>
+  import { supabase } from '../../lib/supabaseClient.js';
+
+  // Restricted product access check
+  const actionsEl = document.querySelector('.product-actions');
+  const restrictedTo = actionsEl?.dataset.restrictedTo;
+  if (restrictedTo) {
+    const atcBtn = document.getElementById('atc-btn');
+    const msg = document.getElementById('restricted-msg');
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user?.email === restrictedTo) {
+        atcBtn.hidden = false;
+        msg.hidden = true;
+      } else {
+        atcBtn.hidden = true;
+        msg.hidden = false;
+        msg.textContent = 'This item is not available.';
+      }
+    });
+  }
+
   // Gallery thumbs
   document.querySelectorAll('.gallery__thumb').forEach(btn => {
     btn.addEventListener('click', () => {

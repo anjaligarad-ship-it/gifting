@@ -1,0 +1,84 @@
+---
+import Layout from '../../layouts/Layout.astro';
+export const prerender = true;
+---
+<Layout title="My Profile | One Earth Gifting" description="View and edit your profile details.">
+  <section class="corp-form-section">
+    <div class="container" style="max-width:480px;">
+      <p class="eyebrow">My Account</p>
+      <h2>Profile</h2>
+
+      <form id="profile-form" class="corp-form" style="margin-top:2rem;" novalidate>
+        <div class="form-group">
+          <label for="profile-name">Full name</label>
+          <input type="text" id="profile-name" name="name">
+        </div>
+        <div class="form-group">
+          <label for="profile-email">Email address</label>
+          <input type="email" id="profile-email" name="email">
+        </div>
+        <div class="form-group">
+          <label for="profile-phone">Contact number</label>
+          <input type="tel" id="profile-phone" name="phone">
+        </div>
+        <div class="form-group">
+          <label for="profile-address">Address</label>
+          <textarea id="profile-address" name="address"></textarea>
+        </div>
+        <div id="profile-status"></div>
+        <button type="submit" class="btn btn-primary" style="min-width:200px;">Save Changes</button>
+      </form>
+    </div>
+  </section>
+</Layout>
+
+<script>
+  import { supabase } from '../../lib/supabaseClient.js';
+
+  const { data: { session } } = await supabase.auth.getSession();
+
+  if (!session) {
+    window.location.href = '/login?redirect=/account/profile';
+  } else {
+    const user = session.user;
+
+    const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle();
+    document.getElementById('profile-name').value = profile?.name || user.user_metadata?.full_name || '';
+    document.getElementById('profile-email').value = profile?.email || user.email || '';
+    document.getElementById('profile-phone').value = profile?.phone || '';
+    document.getElementById('profile-address').value = profile?.address || '';
+
+    document.getElementById('profile-form')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const btn = form.querySelector('button[type=submit]');
+      const status = document.getElementById('profile-status');
+      const data = Object.fromEntries(new FormData(form));
+
+      btn.disabled = true;
+      btn.textContent = 'Saving…';
+      status.innerHTML = '';
+
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .upsert({ id: user.id, name: data.name, email: data.email, phone: data.phone, address: data.address, updated_at: new Date().toISOString() });
+
+      let emailNote = '';
+      if (data.email && data.email !== user.email) {
+        const { error: emailError } = await supabase.auth.updateUser({ email: data.email });
+        emailNote = emailError
+          ? ` Email update failed: ${emailError.message}`
+          : ' A confirmation link has been sent to your new email address.';
+      }
+
+      btn.disabled = false;
+      btn.textContent = 'Save Changes';
+
+      if (profileError) {
+        status.innerHTML = `<p style="color:#c0392b;font-family:var(--font-primary);margin:1rem 0 0;">${profileError.message}</p>`;
+      } else {
+        status.innerHTML = `<p style="color:var(--forest);font-family:var(--font-primary);margin:1rem 0 0;">Profile updated.${emailNote}</p>`;
+      }
+    });
+  }
+</script>

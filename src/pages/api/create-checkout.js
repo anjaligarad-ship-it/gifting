@@ -3,6 +3,7 @@
 // This runs as a Vercel serverless function.
 
 import Stripe from 'stripe';
+import { products } from '../../data/products.js';
 
 export const prerender = false;
 
@@ -12,15 +13,22 @@ export async function POST({ request }) {
   const stripe = new Stripe(import.meta.env.STRIPE_SECRET_KEY);
   const siteUrl = import.meta.env.PUBLIC_SITE_URL || 'https://oneearthgifting.com';
 
-  let items, note, customer;
+  let items, note, customer, userId, userEmail;
   try {
-    ({ items, note, customer } = await request.json());
+    ({ items, note, customer, userId, userEmail } = await request.json());
   } catch {
     return new Response(JSON.stringify({ error: 'Invalid request body' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
   }
 
   if (!items || items.length === 0) {
     return new Response(JSON.stringify({ error: 'Cart is empty' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+  }
+
+  for (const item of items) {
+    const product = products.find(p => p.slug === item.slug);
+    if (product?.restrictedTo && product.restrictedTo !== userEmail) {
+      return new Response(JSON.stringify({ error: 'This item is not available.' }), { status: 403, headers: { 'Content-Type': 'application/json' } });
+    }
   }
 
   if (!customer || !customer.name?.trim() || !customer.email?.trim() || !customer.phone?.trim() || !customer.address?.trim()) {
@@ -89,6 +97,7 @@ export async function POST({ request }) {
         customer_email: customer.email,
         customer_phone: customer.phone,
         customer_address: customer.address,
+        user_id: userId || '',
       },
       custom_text: {
         submit: { message: 'Packaged plastic free and dispatched within 1 to 2 business days.' },

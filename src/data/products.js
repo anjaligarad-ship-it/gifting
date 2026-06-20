@@ -7,8 +7,9 @@ export const products = [
     name: 'Your Carbon Karma Jenga Set',
     category: 'Gift Sets',
     categorySlug: 'gift-sets',
-    price: 0,
-    comingSoon: true,
+    price: 25,
+    preOrder: true,
+    deliveryNotice: 'This product will be delivered in July.',
     description: 'Each One Earth NFC Jenga set you purchase saves 3 trees from deforestation and keeps 1.6 kg of greenhouse gases out of the air. That is equivalent to the energy needed to fully charge a smartphone 195 times.',
     details: ['NFC enabled wooden jenga blocks', 'Comes with digital impact certificate', 'Fully traceable ethical supply chain', 'Plastic free packaging', 'Corporate MOQ: 20 sets'],
     sustainability: 'Each set directly prevents the deforestation of 3 trees and sequesters the equivalent of 1.6 kg of CO2. Packaged entirely plastic free.',
@@ -121,6 +122,19 @@ export const products = [
     stripePriceId: 'price_REPLACE_ME',
     tags: ['stationery'],
   },
+  {
+    slug: 'internal-payment-test',
+    name: 'Internal Payment Test',
+    category: 'Internal',
+    categorySlug: 'internal-test',
+    price: 0.01,
+    description: 'Internal-only item used to verify live payment processing. Not for sale to customers.',
+    details: ['Internal use only'],
+    images: [],
+    tags: ['internal-test'],
+    hidden: true,
+    restrictedTo: 'palkhadegaurav3@gmail.com',
+  },
 ];
 
 export const categories = [
@@ -134,7 +148,12 @@ export function getProductBySlug(slug) {
   return products.find(p => p.slug === slug);
 }
 
+export function getVisibleProducts() {
+  return products.filter(p => !p.hidden);
+}
+
 export function getProductsByCategory(categorySlug) {
-  if (categorySlug === 'all') return products;
-  return products.filter(p => p.categorySlug === categorySlug || p.tags.includes(categorySlug));
+  const visible = getVisibleProducts();
+  if (categorySlug === 'all') return visible;
+  return visible.filter(p => p.categorySlug === categorySlug || p.tags.includes(categorySlug));
 }

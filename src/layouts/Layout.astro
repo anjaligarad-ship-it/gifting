@@ -86,6 +86,16 @@ const canonical = new URL(Astro.url.pathname, Astro.site).href;
           <a href="/search" class="icon-btn" aria-label="Search">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
           </a>
+          <div class="account-menu" id="account-menu">
+            <a href="/login" id="account-link" class="icon-btn" aria-label="Account" aria-haspopup="true" aria-expanded="false">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </a>
+            <div class="account-dropdown" id="account-dropdown" hidden>
+              <a href="/account/orders" class="account-dropdown__item">Order History</a>
+              <a href="/account/profile" class="account-dropdown__item">Profile</a>
+              <button type="button" class="account-dropdown__item account-dropdown__item--danger" id="logout-trigger">Logout</button>
+            </div>
+          </div>
           <button class="icon-btn" id="cart-btn" aria-label="Open basket" aria-haspopup="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
             <span class="cart-badge" id="cart-count" data-count="0" aria-label="items in basket">0</span>
@@ -123,7 +133,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site).href;
       <button class="cart-drawer__close" id="cart-close" aria-label="Close basket">✕</button>
     </div>
     <div class="cart-drawer__body" id="cart-body">
-      <div class="cart-empty">Your basket is empty</div>
+      <div class="cart-empty">Your cart is empty — Pick sustainable gifts for your loved ones!</div>
     </div>
     <div class="cart-drawer__footer">
       <div class="cart-customer-form">
@@ -157,6 +167,17 @@ const canonical = new URL(Astro.url.pathname, Astro.site).href;
 
   <!-- Toast -->
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <!-- Logout confirmation modal -->
+  <div class="modal-overlay" id="logout-modal" hidden>
+    <div class="modal-box" role="alertdialog" aria-modal="true" aria-labelledby="logout-modal-title">
+      <p id="logout-modal-title" class="modal-box__title">Do you wish to sign out of your One Earth Beyond account?</p>
+      <div class="modal-box__actions">
+        <button type="button" class="btn btn-ghost" id="logout-cancel">Cancel</button>
+        <button type="button" class="btn btn-danger" id="logout-confirm">Yes, Logout</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Main content -->
   <main id="main" tabindex="-1">
@@ -226,6 +247,8 @@ const canonical = new URL(Astro.url.pathname, Astro.site).href;
   </footer>
 
   <script>
+    import { supabase } from '../lib/supabaseClient.js';
+
     // ── Helpers ──────────────────────────────────────
     const FREE_DELIVERY_THRESHOLD = 50;
     const $ = id => document.getElementById(id);
@@ -267,10 +290,41 @@ const canonical = new URL(Astro.url.pathname, Astro.site).href;
 
     // ── Cart ──────────────────────────────────────────
     const CART_KEY = 'oeg_cart';
+    let currentUserId = null;
+    let currentUserEmail = null;
     function getCart() { try { return JSON.parse(localStorage.getItem(CART_KEY) || '[]'); } catch { return []; } }
-    function saveCart(c) { try { localStorage.setItem(CART_KEY, JSON.stringify(c)); } catch {} }
+    function saveCart(c) {
+      try { localStorage.setItem(CART_KEY, JSON.stringify(c)); } catch {}
+      if (currentUserId) pushCartToSupabase(currentUserId, c, getNote());
+    }
     function getNote() { try { return localStorage.getItem('oeg_note') || ''; } catch { return ''; } }
-    function saveNote(n) { try { localStorage.setItem('oeg_note', n); } catch {} }
+    function saveNote(n) {
+      try { localStorage.setItem('oeg_note', n); } catch {}
+      if (currentUserId) pushCartToSupabase(currentUserId, getCart(), n);
+    }
+
+    async function pushCartToSupabase(userId, cart, note) {
+      try {
+        await supabase.from('carts').upsert({ user_id: userId, items: cart, note: note || '', updated_at: new Date().toISOString() });
+      } catch {}
+    }
+
+    async function syncCartFromSupabase(userId) {
+      try {
+        const { data } = await supabase.from('carts').select('items, note').eq('user_id', userId).maybeSingle();
+        const localCart = getCart();
+        if (data && data.items && data.items.length > 0) {
+          saveCartLocalOnly(data.items);
+          saveNoteLocalOnly(data.note || '');
+          updateBadge();
+          renderCart();
+        } else if (localCart.length > 0) {
+          await pushCartToSupabase(userId, localCart, getNote());
+        }
+      } catch {}
+    }
+    function saveCartLocalOnly(c) { try { localStorage.setItem(CART_KEY, JSON.stringify(c)); } catch {} }
+    function saveNoteLocalOnly(n) { try { localStorage.setItem('oeg_note', n); } catch {} }
 
     // ── Customer details (mandatory for checkout) ─────
     const CUSTOMER_KEY = 'oeg_customer';
@@ -366,7 +420,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site).href;
         </div>`;
 
       if (cart.length === 0) {
-        body.innerHTML = shippingHTML + '<div class="cart-empty">Your basket is empty</div>';
+        body.innerHTML = shippingHTML + '<div class="cart-empty">Your cart is empty — Pick sustainable gifts for your loved ones!</div>';
         if (totalEl) totalEl.textContent = '£0.00';
         return;
       }
@@ -446,7 +500,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site).href;
         const res = await fetch('/api/create-checkout', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ items: cart, note: getNote(), customer }),
+          body: JSON.stringify({ items: cart, note: getNote(), customer, userId: currentUserId, userEmail: currentUserEmail }),
         });
         const { url, error } = await res.json();
         if (url) window.location.href = url;
@@ -470,6 +524,60 @@ const canonical = new URL(Astro.url.pathname, Astro.site).href;
       saveWL(wl);
     };
     window.isWishlisted = slug => getWL().includes(slug);
+
+    // ── Auth state (header account dropdown + cart sync) ────
+    let isLoggedIn = false;
+    function updateAccountLink(session) {
+      const link = $('account-link');
+      if (!link) return;
+      isLoggedIn = !!session;
+      link.setAttribute('aria-label', isLoggedIn ? 'My account' : 'Log in');
+      link.setAttribute('aria-expanded', 'false');
+      closeAccountDropdown();
+    }
+    function handleAuthChange(session) {
+      updateAccountLink(session);
+      const newUserId = session?.user?.id || null;
+      currentUserEmail = session?.user?.email || null;
+      if (newUserId && newUserId !== currentUserId) {
+        currentUserId = newUserId;
+        syncCartFromSupabase(currentUserId);
+      } else if (!newUserId) {
+        currentUserId = null;
+      }
+    }
+    supabase.auth.getSession().then(({ data: { session } }) => handleAuthChange(session));
+    supabase.auth.onAuthStateChange((_event, session) => handleAuthChange(session));
+
+    // ── Account dropdown ─────────────────────────────────
+    function closeAccountDropdown() {
+      $('account-dropdown')?.setAttribute('hidden', '');
+      $('account-link')?.setAttribute('aria-expanded', 'false');
+    }
+    function openAccountDropdown() {
+      $('account-dropdown')?.removeAttribute('hidden');
+      $('account-link')?.setAttribute('aria-expanded', 'true');
+    }
+    $('account-link')?.addEventListener('click', (e) => {
+      if (!isLoggedIn) return; // let the default /login navigation happen
+      e.preventDefault();
+      const dropdown = $('account-dropdown');
+      if (dropdown?.hasAttribute('hidden')) openAccountDropdown();
+      else closeAccountDropdown();
+    });
+    document.addEventListener('click', (e) => {
+      if (!$('account-menu')?.contains(e.target)) closeAccountDropdown();
+    });
+
+    // ── Logout confirmation modal ────────────────────────
+    function openLogoutModal() { $('logout-modal')?.removeAttribute('hidden'); }
+    function closeLogoutModal() { $('logout-modal')?.setAttribute('hidden', ''); }
+    $('logout-trigger')?.addEventListener('click', () => { closeAccountDropdown(); openLogoutModal(); });
+    $('logout-cancel')?.addEventListener('click', closeLogoutModal);
+    $('logout-confirm')?.addEventListener('click', async () => {
+      await supabase.auth.signOut();
+      window.location.href = '/';
+    });
 
     // Init
     updateBadge();

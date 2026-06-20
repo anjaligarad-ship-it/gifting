@@ -1,6 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import { products, categories } from '../data/products.js';
+import { categories, getVisibleProducts } from '../data/products.js';
+const products = getVisibleProducts();
 export const prerender = true;
 ---
 <Layout title="Shop | One Earth Gifting" description="Browse our full collection of sustainable, ethically sourced gifts.">
@@ -34,6 +35,7 @@ export const prerender = true;
               <div class="product-card__img">
                 <div class="card-carousel">
                   {product.comingSoon && <div class="coming-soon-ribbon">Coming Soon</div>}
+                  {product.preOrder && <div class="coming-soon-ribbon">Pre-order Now</div>}
                   <div class="card-carousel__slides">
                     {product.images.map((img, i) => (
                       <div class={`card-carousel__slide${i === 0 ? ' active' : ''}`}>
@@ -83,7 +85,7 @@ export const prerender = true;
                       <button class="btn btn-primary btn-sm"
                         onclick={`addToCart({slug:'${product.slug}',name:'${product.name.replace(/'/g,"\\'")}',price:${product.price},image:'/images/${product.images[0] || ''}'})`}
                         aria-label={`Add ${product.name} to basket`}>
-                        Add to Basket
+                        {product.preOrder ? 'Pre-order Now' : 'Add to Basket'}
                       </button>
                     </>
                   )}
