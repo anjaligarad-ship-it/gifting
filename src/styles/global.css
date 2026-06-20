@@ -123,6 +123,22 @@ p  { color: var(--text-mid); line-height: 1.75; }
 .account-dropdown__item--danger { color: #c0392b; }
 .account-dropdown__item--danger:hover { background: rgba(192,57,43,0.08); }
 
+/* Search panel */
+.search-menu { position: relative; }
+.search-panel { position: absolute; top: calc(100% + 0.5rem); right: 0; width: 320px; background: var(--white); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: var(--shadow-md); padding: 0.75rem; z-index: 260; opacity: 0; visibility: hidden; transform: translateY(-6px); transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s; pointer-events: none; }
+.search-panel::before { content: ''; position: absolute; top: -0.5rem; left: 0; right: 0; height: 0.5rem; }
+.search-panel.open { opacity: 1; visibility: visible; transform: translateY(0); pointer-events: auto; }
+.search-panel input { width: 100%; padding: 0.65rem 0.85rem; border: 1px solid var(--border); border-radius: var(--radius-sm); font-family: var(--font-primary); font-size: 0.86rem; background: var(--white); }
+.search-panel input:focus { border-color: var(--forest); outline: none; }
+.search-panel__results { max-height: 360px; overflow-y: auto; margin-top: 0.5rem; }
+.search-panel__empty { font-size: 0.82rem; color: var(--text-light); padding: 0.75rem 0.25rem; }
+.search-result { display: flex; align-items: center; gap: 0.7rem; padding: 0.55rem 0.25rem; border-radius: var(--radius-sm); }
+.search-result:hover { background: var(--sand); }
+.search-result img, .search-result__img-placeholder { width: 44px; height: 44px; border-radius: var(--radius-sm); object-fit: cover; background: var(--sand); flex-shrink: 0; }
+.search-result__info { display: flex; flex-direction: column; min-width: 0; }
+.search-result__name { font-family: var(--font-primary); font-size: 0.82rem; font-weight: 600; color: var(--text-dark); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.search-result__price { font-size: 0.78rem; color: var(--forest); font-weight: 600; }
+
 /* Modal */
 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 500; display: flex; align-items: center; justify-content: center; padding: 1.5rem; }
 .modal-overlay[hidden] { display: none; }

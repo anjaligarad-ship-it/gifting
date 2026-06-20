@@ -1,5 +1,11 @@
 ---
 import '../styles/global.css';
+import { getVisibleProducts } from '../data/products.js';
+
+const searchProducts = getVisibleProducts().map(p => ({
+  slug: p.slug, name: p.name, category: p.category,
+  price: p.price, image: p.images[0] || '', preOrder: !!p.preOrder, comingSoon: !!p.comingSoon,
+}));
 
 export interface Props {
   title?: string;
@@ -83,9 +89,15 @@ const canonical = new URL(Astro.url.pathname, Astro.site).href;
         </nav>
 
         <div class="header-actions">
-          <a href="/search" class="icon-btn" aria-label="Search">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-          </a>
+          <div class="search-menu" id="search-menu">
+            <button type="button" class="icon-btn" id="search-btn" aria-label="Search" aria-haspopup="true" aria-expanded="false">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            </button>
+            <div class="search-panel" id="search-panel">
+              <input type="search" id="search-input" placeholder="Search products..." aria-label="Search products">
+              <div id="search-results" class="search-panel__results"></div>
+            </div>
+          </div>
           <div class="account-menu" id="account-menu">
             <a href="/login" id="account-link" class="icon-btn" aria-label="Account" aria-haspopup="true" aria-expanded="false">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -100,7 +112,6 @@ const canonical = new URL(Astro.url.pathname, Astro.site).href;
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
             <span class="cart-badge" id="cart-count" data-count="0" aria-label="items in basket">0</span>
           </button>
-          <a href="/corporate" class="btn btn-terracotta btn-sm header-cta">Corporate Enquiry</a>
         </div>
       </div>
     </div>
@@ -167,6 +178,8 @@ const canonical = new URL(Astro.url.pathname, Astro.site).href;
 
   <!-- Toast -->
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script type="application/json" id="search-data" set:html={JSON.stringify(searchProducts)} />
 
   <!-- Logout confirmation modal -->
   <div class="modal-overlay" id="logout-modal" hidden>
@@ -581,6 +594,52 @@ const canonical = new URL(Astro.url.pathname, Astro.site).href;
       await supabase.auth.signOut();
       window.location.href = '/';
     });
+
+    // ── Search panel (expands inline, no page navigation) ──
+    function closeSearchPanel() {
+      $('search-panel')?.classList.remove('open');
+      $('search-btn')?.setAttribute('aria-expanded', 'false');
+    }
+    function openSearchPanel() {
+      $('search-panel')?.classList.add('open');
+      $('search-btn')?.setAttribute('aria-expanded', 'true');
+      $('search-input')?.focus();
+    }
+    $('search-btn')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if ($('search-panel')?.classList.contains('open')) closeSearchPanel();
+      else openSearchPanel();
+    });
+    document.addEventListener('click', (e) => {
+      if (!$('search-menu')?.contains(e.target)) closeSearchPanel();
+    });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeSearchPanel(); });
+
+    function searchCardHTML(p) {
+      const img = p.image
+        ? `<img src="/images/${p.image}" alt="${p.name}" loading="lazy" width="60" height="60">`
+        : `<div class="search-result__img-placeholder"></div>`;
+      const label = p.comingSoon ? 'Coming Soon' : (p.preOrder ? 'Pre-order · £' + p.price.toFixed(2) : '£' + p.price.toFixed(2));
+      return `
+        <a href="/products/${p.slug}" class="search-result">
+          ${img}
+          <span class="search-result__info">
+            <span class="search-result__name">${p.name}</span>
+            <span class="search-result__price">${label}</span>
+          </span>
+        </a>`;
+    }
+    function renderSearch(query) {
+      const resultsEl = $('search-results');
+      const q = query.trim().toLowerCase();
+      if (!q) { resultsEl.innerHTML = ''; return; }
+      const searchData = JSON.parse($('search-data')?.textContent || '[]');
+      const matches = searchData.filter(p => p.name.toLowerCase().includes(q) || p.category.toLowerCase().includes(q)).slice(0, 8);
+      resultsEl.innerHTML = matches.length
+        ? matches.map(searchCardHTML).join('')
+        : `<p class="search-panel__empty">No results for "${query}"</p>`;
+    }
+    $('search-input')?.addEventListener('input', (e) => renderSearch(e.target.value));
 
     // Init
     updateBadge();
