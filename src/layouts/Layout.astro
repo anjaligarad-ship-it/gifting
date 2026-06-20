@@ -90,7 +90,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site).href;
             <a href="/login" id="account-link" class="icon-btn" aria-label="Account" aria-haspopup="true" aria-expanded="false">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
             </a>
-            <div class="account-dropdown" id="account-dropdown" hidden>
+            <div class="account-dropdown" id="account-dropdown">
               <a href="/account/orders" class="account-dropdown__item">Order History</a>
               <a href="/account/profile" class="account-dropdown__item">Profile</a>
               <button type="button" class="account-dropdown__item account-dropdown__item--danger" id="logout-trigger">Logout</button>
@@ -551,20 +551,23 @@ const canonical = new URL(Astro.url.pathname, Astro.site).href;
 
     // ── Account dropdown ─────────────────────────────────
     function closeAccountDropdown() {
-      $('account-dropdown')?.setAttribute('hidden', '');
+      $('account-dropdown')?.classList.remove('open');
       $('account-link')?.setAttribute('aria-expanded', 'false');
     }
     function openAccountDropdown() {
-      $('account-dropdown')?.removeAttribute('hidden');
+      $('account-dropdown')?.classList.add('open');
       $('account-link')?.setAttribute('aria-expanded', 'true');
     }
     $('account-link')?.addEventListener('click', (e) => {
       if (!isLoggedIn) return; // let the default /login navigation happen
+      // Logged in: the icon is a hover target, not a navigation link — clicking just toggles.
       e.preventDefault();
       const dropdown = $('account-dropdown');
-      if (dropdown?.hasAttribute('hidden')) openAccountDropdown();
+      if (!dropdown?.classList.contains('open')) openAccountDropdown();
       else closeAccountDropdown();
     });
+    $('account-menu')?.addEventListener('mouseenter', () => { if (isLoggedIn) openAccountDropdown(); });
+    $('account-menu')?.addEventListener('mouseleave', () => { if (isLoggedIn) closeAccountDropdown(); });
     document.addEventListener('click', (e) => {
       if (!$('account-menu')?.contains(e.target)) closeAccountDropdown();
     });

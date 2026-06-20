@@ -115,7 +115,9 @@ p  { color: var(--text-mid); line-height: 1.75; }
 
 /* Account dropdown */
 .account-menu { position: relative; }
-.account-dropdown { position: absolute; top: calc(100% + 0.5rem); right: 0; min-width: 180px; background: var(--white); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: var(--shadow-md); padding: 0.4rem; z-index: 260; display: flex; flex-direction: column; }
+.account-dropdown { position: absolute; top: calc(100% + 0.5rem); right: 0; min-width: 180px; background: var(--white); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: var(--shadow-md); padding: 0.4rem; z-index: 260; display: flex; flex-direction: column; opacity: 0; visibility: hidden; transform: translateY(-6px); transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s; pointer-events: none; }
+.account-dropdown::before { content: ''; position: absolute; top: -0.5rem; left: 0; right: 0; height: 0.5rem; }
+.account-dropdown.open { opacity: 1; visibility: visible; transform: translateY(0); pointer-events: auto; }
 .account-dropdown__item { display: block; width: 100%; text-align: left; padding: 0.65rem 0.85rem; border-radius: var(--radius-sm); font-family: var(--font-primary); font-size: 0.84rem; font-weight: 500; color: var(--text-dark); background: none; border: none; cursor: pointer; }
 .account-dropdown__item:hover { background: var(--sand); }
 .account-dropdown__item--danger { color: #c0392b; }
