@@ -1,15 +1,12 @@
 // POST /api/promo/apply
-// Validates a promo code for the logged-in user and returns the discount amount.
+// Validates a promo code for the logged-in user and returns the discount rate.
 // Eligibility: email verified + zero prior orders.
-// Returns { valid, discountRate, discountCap, error }
+// Returns { valid, code, discountRate, discountCap, error }
 
 import { supabaseAdmin } from '../../../lib/supabaseAdmin.js';
+import { PROMO_CODES } from '../../../data/promoCodes.js';
 
 export const prerender = false;
-
-const DISCOUNT_RATE = 0.15;
-const DISCOUNT_CAP = 60;
-const VALID_CODES = ['FIRST'];
 
 export async function POST({ request }) {
   let code, userId;
@@ -22,7 +19,8 @@ export async function POST({ request }) {
   if (!userId) return json({ valid: false, error: 'Please log in to apply a promo code.' }, 401);
 
   const normalised = (code || '').trim().toUpperCase();
-  if (!VALID_CODES.includes(normalised)) {
+  const promo = PROMO_CODES[normalised];
+  if (!promo) {
     return json({ valid: false, error: 'Invalid promo code.' });
   }
 
@@ -43,7 +41,7 @@ export async function POST({ request }) {
     return json({ valid: false, error: 'This discount is for first-time customers only.' });
   }
 
-  return json({ valid: true, code: normalised, discountRate: DISCOUNT_RATE, discountCap: DISCOUNT_CAP });
+  return json({ valid: true, code: normalised, discountRate: promo.rate, discountCap: promo.cap });
 }
 
 function json(body, status = 200) {

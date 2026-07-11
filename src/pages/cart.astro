@@ -52,10 +52,10 @@ export const prerender = true;
             <p id="cp-promo-msg" style="font-size:0.82rem;margin:0.4rem 0 0;min-height:1.1em;"></p>
           </div>
 
-          <!-- Applied promo banner (shown after successful apply) -->
-          <div id="cp-promo-applied" hidden style="margin-top:0.75rem;padding:0.85rem 1rem;background:#e8f5e9;border:1.5px solid #4caf50;border-radius:var(--radius-md);display:flex;align-items:center;justify-content:space-between;gap:0.5rem;">
+          <!-- Applied promo banner (shown only after a valid Apply) -->
+          <div id="cp-promo-applied" style="display:none;margin-top:0.75rem;padding:0.85rem 1rem;background:#e8f5e9;border:1.5px solid #4caf50;border-radius:var(--radius-md);align-items:center;justify-content:space-between;gap:0.5rem;">
             <div>
-              <div style="font-family:var(--font-primary);font-weight:700;font-size:0.95rem;color:#2d7a3a;">🎉 Code FIRST applied — 15% off!</div>
+              <div id="cp-promo-applied-label" style="font-family:var(--font-primary);font-weight:700;font-size:0.95rem;color:#2d7a3a;"></div>
               <div style="font-size:0.8rem;color:#388e3c;margin-top:0.1rem;">Discount shown below</div>
             </div>
             <button type="button" id="cp-promo-remove-btn" style="font-size:0.78rem;color:#888;background:none;border:none;cursor:pointer;text-decoration:underline;white-space:nowrap;">Remove</button>
@@ -67,8 +67,8 @@ export const prerender = true;
               <span>Subtotal</span>
               <span id="cp-subtotal">£0.00</span>
             </div>
-            <div id="cp-discount-row" hidden style="display:flex;justify-content:space-between;font-size:0.95rem;font-weight:600;color:#2d7a3a;">
-              <span>Discount (FIRST)</span>
+            <div id="cp-discount-row" style="display:none;justify-content:space-between;font-size:0.95rem;font-weight:600;color:#2d7a3a;">
+              <span id="cp-discount-label">Discount</span>
               <span id="cp-promo-discount"></span>
             </div>
             <div style="display:flex;justify-content:space-between;font-family:var(--font-primary);font-size:1.15rem;font-weight:700;border-top:2px solid var(--border);padding-top:0.6rem;margin-top:0.1rem;">
@@ -98,6 +98,8 @@ export const prerender = true;
 
   // Applied promo state — session-only, re-validated server-side at checkout
   let appliedPromoCode = null;
+  let appliedDiscountRate = 0;
+  let appliedDiscountCap = 0;
 
   async function applyPromoCode(code) {
     const msg = $('cp-promo-msg');
@@ -116,6 +118,8 @@ export const prerender = true;
 
       if (data.valid) {
         appliedPromoCode = data.code;
+        appliedDiscountRate = data.discountRate;
+        appliedDiscountCap = data.discountCap;
         if (msg) { msg.style.color = '#2d7a3a'; msg.textContent = ''; }
         updateForm();
       } else {
@@ -129,6 +133,8 @@ export const prerender = true;
 
   function removePromoCode() {
     appliedPromoCode = null;
+    appliedDiscountRate = 0;
+    appliedDiscountCap = 0;
     const input = $('cp-promo-input');
     const msg = $('cp-promo-msg');
     if (input) input.value = '';
@@ -214,14 +220,28 @@ export const prerender = true;
     $('cart-page-form-wrap').hidden = false;
     const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0);
 
-    const discountPence = appliedPromoCode ? Math.round(Math.min(subtotal * 0.15, 60) * 100) : 0;
+    const discountPence = appliedPromoCode
+      ? Math.round(Math.min(subtotal * appliedDiscountRate, appliedDiscountCap) * 100)
+      : 0;
     const discount = discountPence / 100;
     const total = Math.max(0, subtotal - discount);
 
     $('cp-subtotal').textContent = fmt(subtotal);
-    $('cp-promo-applied').hidden = !appliedPromoCode;
-    $('cp-discount-row').hidden = !appliedPromoCode;
-    if (appliedPromoCode) $('cp-promo-discount').textContent = `-${fmt(discount)}`;
+
+    const promoApplied = $('cp-promo-applied');
+    const discountRow = $('cp-discount-row');
+    if (appliedPromoCode) {
+      const pct = Math.round(appliedDiscountRate * 100);
+      if ($('cp-promo-applied-label')) $('cp-promo-applied-label').textContent = `🎉 Code ${appliedPromoCode} applied — ${pct}% off!`;
+      if ($('cp-discount-label')) $('cp-discount-label').textContent = `Discount (${appliedPromoCode})`;
+      $('cp-promo-discount').textContent = `-${fmt(discount)}`;
+      if (promoApplied) promoApplied.style.display = 'flex';
+      if (discountRow) discountRow.style.display = 'flex';
+    } else {
+      if (promoApplied) promoApplied.style.display = 'none';
+      if (discountRow) discountRow.style.display = 'none';
+    }
+
     $('cp-total').textContent = fmt(total);
 
     const c = getCustomer();

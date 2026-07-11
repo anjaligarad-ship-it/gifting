@@ -4,13 +4,12 @@
 
 import Stripe from 'stripe';
 import { products } from '../../data/products.js';
+import { PROMO_CODES } from '../../data/promoCodes.js';
 import { supabaseAdmin } from '../../lib/supabaseAdmin.js';
 
 export const prerender = false;
 
 const FREE_DELIVERY_THRESHOLD = 50;
-const FIRST_ORDER_DISCOUNT_RATE = 0.15;
-const FIRST_ORDER_DISCOUNT_CAP = 60;
 
 export async function POST({ request }) {
   const stripe = new Stripe(import.meta.env.STRIPE_SECRET_KEY);
@@ -46,22 +45,26 @@ export async function POST({ request }) {
 
   let discounts;
   let promoApplied = false;
-  if (promoCode && promoCode.trim().toUpperCase() === 'FIRST' && userId) {
-    const { data: { user: promoUser } } = await supabaseAdmin.auth.admin.getUserById(userId);
-    const { count: orderCount } = await supabaseAdmin
-      .from('orders')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', userId);
-    if (promoUser?.email_confirmed_at && (!orderCount || orderCount === 0)) {
-      const discountAmount = Math.min(subtotal * FIRST_ORDER_DISCOUNT_RATE, FIRST_ORDER_DISCOUNT_CAP);
-      const coupon = await stripe.coupons.create({
-        amount_off: Math.round(discountAmount * 100),
-        currency: 'gbp',
-        duration: 'once',
-        name: 'First order — 15% off (capped at £60)',
-      });
-      discounts = [{ coupon: coupon.id }];
-      promoApplied = true;
+  if (promoCode && userId) {
+    const normalisedCode = promoCode.trim().toUpperCase();
+    const promo = PROMO_CODES[normalisedCode];
+    if (promo) {
+      const { data: { user: promoUser } } = await supabaseAdmin.auth.admin.getUserById(userId);
+      const { count: orderCount } = await supabaseAdmin
+        .from('orders')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', userId);
+      if (promoUser?.email_confirmed_at && (!orderCount || orderCount === 0)) {
+        const discountAmount = Math.min(subtotal * promo.rate, promo.cap);
+        const coupon = await stripe.coupons.create({
+          amount_off: Math.round(discountAmount * 100),
+          currency: 'gbp',
+          duration: 'once',
+          name: promo.stripeLabel,
+        });
+        discounts = [{ coupon: coupon.id }];
+        promoApplied = true;
+      }
     }
   }
 

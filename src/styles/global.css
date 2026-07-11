@@ -81,6 +81,12 @@ p  { color: var(--text-mid); line-height: 1.75; }
 .btn-ghost:hover { background: var(--forest); color: var(--white); }
 .btn-sm { padding: 0.5rem 1.1rem; font-size: 0.77rem; }
 
+/* ── Homepage promo banner ─────────────────────────── */
+.homepage-promo-bar { background: var(--forest); color: var(--white); text-align: center; padding: 0.75rem var(--gutter); }
+.homepage-promo-bar__text { font-family: var(--font-primary); font-size: 0.88rem; font-weight: 400; letter-spacing: 0.04em; }
+.homepage-promo-bar__link { color: var(--white); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; white-space: nowrap; }
+.homepage-promo-bar__link:hover { opacity: 0.85; }
+
 /* ── Announcement bar ──────────────────────────────── */
 .announcement-bar { background: var(--forest); color: var(--white); font-family: var(--font-primary); font-size: 0.8rem; font-weight: 400; letter-spacing: 0.05em; text-align: center; padding: 0.55rem var(--gutter); overflow: hidden; }
 .announcement-bar__track { display: flex; gap: 4rem; animation: scrollAnnounce 50s linear infinite; white-space: nowrap; width: max-content; }
