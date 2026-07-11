@@ -69,6 +69,15 @@ const canonical = new URL(Astro.url.pathname, Astro.site).href;
 
   <slot name="before-header" />
 
+  <!-- Sitewide first-order promo banner -->
+  <div class="homepage-promo-bar">
+    <span class="homepage-promo-bar__text">
+      🌿 First order? Apply code <strong>FIRST</strong> at checkout to get <strong>20% off</strong>
+      &nbsp;·&nbsp;
+      <a href="/cart" class="homepage-promo-bar__link">Shop Now →</a>
+    </span>
+  </div>
+
   <!-- Header -->
   <header class="site-header" role="banner">
     <div class="container">
