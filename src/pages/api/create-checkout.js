@@ -16,9 +16,9 @@ export async function POST({ request }) {
   const stripe = new Stripe(import.meta.env.STRIPE_SECRET_KEY);
   const siteUrl = import.meta.env.PUBLIC_SITE_URL || 'https://oneearthgifting.com';
 
-  let items, note, customer, userId, userEmail, promoCode;
+  let items, note, customer, userId, userEmail, promoCode, isGift, recipientAddress, giftMessage, hidePrice;
   try {
-    ({ items, note, customer, userId, userEmail, promoCode } = await request.json());
+    ({ items, note, customer, userId, userEmail, promoCode, isGift, recipientAddress, giftMessage, hidePrice } = await request.json());
   } catch {
     return new Response(JSON.stringify({ error: 'Invalid request body' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
   }
@@ -128,12 +128,16 @@ export async function POST({ request }) {
       ],
       metadata: {
         gift_note: note || '',
+        gift_message: giftMessage || '',
+        is_gift: isGift ? 'true' : 'false',
+        hide_price: hidePrice ? 'true' : 'false',
         source: 'one-earth-gifting',
         customer_name: customer.name,
         customer_email: customer.email,
         customer_phone: customer.phone,
         customer_address: formatAddress(structuredAddress),
         customer_address_json: JSON.stringify(structuredAddress),
+        recipient_address_json: isGift && recipientAddress ? JSON.stringify(recipientAddress) : '',
         user_id: userId || '',
         first_order_promo_user_id: promoApplied ? userId : '',
       },

@@ -7,7 +7,7 @@ Single source of truth. Work lowest-score group first, top-to-bottom within each
 ## GROUP 1 — Gifting features (scorecard: 2/10)
 
 - [x] **G1** Structured address capture with postcode validation — 5 structured fields, UK regex normaliser, inline blur validation, server-side validateAddress(), formatAddress() on metadata. (+25 unit) — replace free-text textarea with name/line1/line2/town/postcode fields; validate UK postcode regex then postcodes.io; normalise to uppercase with correct spacing; store structured object on order.
-- [ ] **G2** Separate recipient vs billing address (gift toggle) — "This is a gift" toggle reveals recipient address form; order carries two distinct address objects; recipient postcode drives delivery options.
+- [x] **G2** Separate recipient vs billing address (gift toggle) — toggle reveals recipient address form; order carries both addresses in metadata; recipient postcode drives delivery. (+7 unit) — "This is a gift" toggle reveals recipient address form; order carries two distinct address objects; recipient postcode drives delivery options.
 - [ ] **G3** Gift message at checkout — optional textarea (max 250 chars) with live counter; stored on order; surfaced in order views.
 - [ ] **G4** Gift receipt / hidden prices — "Hide prices on packing slip" flag stored on order; any generated slip/email omits prices when flag is set.
 
