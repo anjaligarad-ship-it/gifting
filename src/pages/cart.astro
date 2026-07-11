@@ -68,6 +68,19 @@ export const prerender = true;
             <input type="text" id="cp-addr-postcode" required autocomplete="postal-code" placeholder="e.g. CV1 1GU" style="text-transform:uppercase;max-width:180px;">
             <p class="field-error" id="cp-addr-postcode-err" style="color:#c0392b;font-size:0.8rem;margin:0.2rem 0 0;display:none;"></p>
           </div>
+          <!-- Gift message + hide prices (G3/G4 — shown when gift toggle is on) -->
+          <div id="cp-gift-extras" style="display:none;margin-top:0.75rem;">
+            <div class="form-group">
+              <label for="cp-gift-message">Gift message <span style="font-weight:400;color:var(--text-light);">(optional, printed on card)</span></label>
+              <textarea id="cp-gift-message" maxlength="250" rows="3" placeholder="Write a personal message for the recipient…" style="resize:vertical;"></textarea>
+              <p id="cp-gift-message-counter" style="font-size:0.78rem;color:var(--text-light);text-align:right;margin:0.2rem 0 0;">0 / 250</p>
+            </div>
+            <label style="display:flex;align-items:center;gap:0.65rem;cursor:pointer;font-size:0.9rem;margin-top:0.5rem;">
+              <input type="checkbox" id="cp-hide-price" style="width:1rem;height:1rem;cursor:pointer;">
+              Hide prices on packing slip (gift receipt)
+            </label>
+          </div>
+
           <!-- Recipient address (G2 — shown when gift toggle is on) -->
           <div id="cp-recipient-section" style="display:none;margin-top:1.5rem;padding:1rem;border:1.5px solid var(--forest);border-radius:var(--radius-md);">
             <h3 style="font-size:0.95rem;font-weight:700;margin-bottom:0.75rem;color:var(--forest);">🎁 Recipient's Delivery Address</h3>
@@ -322,10 +335,21 @@ export const prerender = true;
     if (el) { el.textContent = msg; el.style.display = msg ? 'block' : 'none'; }
   }
 
-  // Gift toggle (G2)
+  // Gift toggle (G2/G3/G4)
   $('cp-is-gift')?.addEventListener('change', () => {
     const isGift = $('cp-is-gift').checked;
     $('cp-recipient-section').style.display = isGift ? 'block' : 'none';
+    $('cp-gift-extras').style.display = isGift ? 'block' : 'none';
+  });
+
+  // Gift message char counter (G3)
+  $('cp-gift-message')?.addEventListener('input', () => {
+    const len = $('cp-gift-message').value.length;
+    const counter = $('cp-gift-message-counter');
+    if (counter) {
+      counter.textContent = `${len} / 250`;
+      counter.style.color = len > 230 ? '#c0392b' : 'var(--text-light)';
+    }
   });
 
   // Validate postcode format inline on blur
@@ -355,6 +379,8 @@ export const prerender = true;
       },
     };
     if (isGift) {
+      form.giftMessage = $('cp-gift-message')?.value.trim() || '';
+      form.hidePrice = $('cp-hide-price')?.checked || false;
       form.recipientAddress = {
         name: $('cp-rec-name')?.value.trim() || '',
         line1: $('cp-rec-line1')?.value.trim() || '',
