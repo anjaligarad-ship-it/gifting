@@ -8,13 +8,19 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
-    "preview": "astro preview"
+    "preview": "astro preview",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@astrojs/vercel": "^7.0.0",
     "@supabase/supabase-js": "^2.108.2",
     "astro": "^4.0.0",
     "pg": "^8.22.0",
-    "stripe": "^14.0.0"
+    "stripe": "^14.0.0",
+    "twilio": "^6.0.2"
+  },
+  "devDependencies": {
+    "vitest": "^4.1.10"
   }
 }

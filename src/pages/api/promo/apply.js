@@ -1,0 +1,54 @@
+// POST /api/promo/apply
+// Validates a promo code for the logged-in user and returns the discount amount.
+// Eligibility: email verified + zero prior orders.
+// Returns { valid, discountRate, discountCap, error }
+
+import { supabaseAdmin } from '../../../lib/supabaseAdmin.js';
+
+export const prerender = false;
+
+const DISCOUNT_RATE = 0.15;
+const DISCOUNT_CAP = 60;
+const VALID_CODES = ['FIRST'];
+
+export async function POST({ request }) {
+  let code, userId;
+  try {
+    ({ code, userId } = await request.json());
+  } catch {
+    return json({ valid: false, error: 'Invalid request.' }, 400);
+  }
+
+  if (!userId) return json({ valid: false, error: 'Please log in to apply a promo code.' }, 401);
+
+  const normalised = (code || '').trim().toUpperCase();
+  if (!VALID_CODES.includes(normalised)) {
+    return json({ valid: false, error: 'Invalid promo code.' });
+  }
+
+  // Check email is verified
+  const { data: { user }, error: userError } = await supabaseAdmin.auth.admin.getUserById(userId);
+  if (userError || !user) return json({ valid: false, error: 'Could not verify your account.' }, 400);
+  if (!user.email_confirmed_at) {
+    return json({ valid: false, error: 'Please verify your email address first. Check your inbox for a verification link.' });
+  }
+
+  // Must have zero prior orders
+  const { count: orderCount } = await supabaseAdmin
+    .from('orders')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', userId);
+
+  if (orderCount && orderCount > 0) {
+    return json({ valid: false, error: 'This discount is for first-time customers only.' });
+  }
+
+  return json({ valid: true, code: normalised, discountRate: DISCOUNT_RATE, discountCap: DISCOUNT_CAP });
+}
+
+function json(body, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  });
+}

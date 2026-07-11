@@ -4,18 +4,21 @@
 
 import Stripe from 'stripe';
 import { products } from '../../data/products.js';
+import { supabaseAdmin } from '../../lib/supabaseAdmin.js';
 
 export const prerender = false;
 
 const FREE_DELIVERY_THRESHOLD = 50;
+const FIRST_ORDER_DISCOUNT_RATE = 0.15;
+const FIRST_ORDER_DISCOUNT_CAP = 60;
 
 export async function POST({ request }) {
   const stripe = new Stripe(import.meta.env.STRIPE_SECRET_KEY);
   const siteUrl = import.meta.env.PUBLIC_SITE_URL || 'https://oneearthgifting.com';
 
-  let items, note, customer, userId, userEmail;
+  let items, note, customer, userId, userEmail, promoCode;
   try {
-    ({ items, note, customer, userId, userEmail } = await request.json());
+    ({ items, note, customer, userId, userEmail, promoCode } = await request.json());
   } catch {
     return new Response(JSON.stringify({ error: 'Invalid request body' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
   }
@@ -40,6 +43,27 @@ export async function POST({ request }) {
   }
 
   const subtotal = items.reduce((s, item) => s + item.price * item.qty, 0);
+
+  let discounts;
+  let promoApplied = false;
+  if (promoCode && promoCode.trim().toUpperCase() === 'FIRST' && userId) {
+    const { data: { user: promoUser } } = await supabaseAdmin.auth.admin.getUserById(userId);
+    const { count: orderCount } = await supabaseAdmin
+      .from('orders')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId);
+    if (promoUser?.email_confirmed_at && (!orderCount || orderCount === 0)) {
+      const discountAmount = Math.min(subtotal * FIRST_ORDER_DISCOUNT_RATE, FIRST_ORDER_DISCOUNT_CAP);
+      const coupon = await stripe.coupons.create({
+        amount_off: Math.round(discountAmount * 100),
+        currency: 'gbp',
+        duration: 'once',
+        name: 'First order — 15% off (capped at £60)',
+      });
+      discounts = [{ coupon: coupon.id }];
+      promoApplied = true;
+    }
+  }
 
   // Build Stripe line items
   // If you have Stripe Price IDs set, use them. Otherwise use price_data (simpler, no product setup needed).
@@ -98,11 +122,12 @@ export async function POST({ request }) {
         customer_phone: customer.phone,
         customer_address: customer.address,
         user_id: userId || '',
+        first_order_promo_user_id: promoApplied ? userId : '',
       },
       custom_text: {
         submit: { message: 'Packaged plastic free and dispatched within 1 to 2 business days.' },
       },
-      allow_promotion_codes: true,
+      ...(discounts ? { discounts } : { allow_promotion_codes: true }),
     });
 
     return new Response(JSON.stringify({ url: session.url }), {

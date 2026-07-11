@@ -79,9 +79,18 @@ export const prerender = true;
   });
 
   document.getElementById('google-btn')?.addEventListener('click', async () => {
-    await supabase.auth.signInWithOAuth({
+    const btn = document.getElementById('google-btn');
+    btn.disabled = true;
+    btn.textContent = 'Redirecting to Google…';
+    const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: `${window.location.origin}/shop` },
+      options: { redirectTo: `${window.location.origin}/auth/callback?redirect=/shop` },
     });
+    if (error) {
+      btn.disabled = false;
+      btn.innerHTML = 'Sign up with Google';
+      const status = document.getElementById('form-status');
+      status.innerHTML = `<p style="color:#c0392b;font-family:var(--font-primary);margin:1rem 0 0;">Google sign-in failed: ${error.message}</p>`;
+    }
   });
 </script>

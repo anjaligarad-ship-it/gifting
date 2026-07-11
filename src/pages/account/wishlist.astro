@@ -1,0 +1,82 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { products } from '../../data/products.js';
+export const prerender = true;
+
+const wishlistData = products.map(p => ({
+  slug: p.slug,
+  name: p.name,
+  price: p.price,
+  image: p.images?.[0] ? `/images/${p.images[0]}` : '',
+}));
+---
+<Layout title="Wishlist | One Earth Gifting" description="Items you've saved for later.">
+  <section class="corp-form-section">
+    <div class="container" style="max-width:900px;">
+      <p class="eyebrow">My Account</p>
+      <h2>Wishlist</h2>
+      <div id="wishlist-grid" class="products-grid" style="margin-top:2rem;">
+        <p class="cart-empty">Loading your wishlist…</p>
+      </div>
+    </div>
+  </section>
+  <script type="application/json" id="wishlist-data" set:html={JSON.stringify(wishlistData)} />
+</Layout>
+
+<script>
+  function fmtGBP(n) { return '£' + Number(n).toFixed(2).replace(/\.00$/, ''); }
+
+  function renderWishlist() {
+    const grid = document.getElementById('wishlist-grid');
+    const allProducts = JSON.parse(document.getElementById('wishlist-data')?.textContent || '[]');
+    const wl = window.isWishlisted ? allProducts.filter(p => window.isWishlisted(p.slug)) : [];
+
+    if (wl.length === 0) {
+      grid.innerHTML = `<p class="cart-empty">Your wishlist is empty — tap the heart on any product to save it here.</p>`;
+      return;
+    }
+
+    grid.innerHTML = wl.map(p => `
+      <div class="product-item visible" data-slug="${p.slug}">
+        <article class="product-card">
+          <div class="product-card__img">
+            <a href="/products/${p.slug}">
+              <img src="${p.image}" alt="${p.name}" loading="lazy" width="600" height="450" onerror="this.style.display='none'">
+            </a>
+            <button class="product-card__wishlist active" data-slug="${p.slug}" aria-label="Remove ${p.name} from wishlist">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            </button>
+          </div>
+          <div class="product-card__body">
+            <h3 class="product-card__name"><a href="/products/${p.slug}">${p.name}</a></h3>
+            <div class="product-card__footer">
+              <span class="product-card__price">${fmtGBP(p.price)}</span>
+              <button class="btn btn-primary btn-sm" data-add-slug="${p.slug}" data-name="${p.name.replace(/"/g, '&quot;')}" data-price="${p.price}" data-image="${p.image}">
+                Add to Basket
+              </button>
+            </div>
+          </div>
+        </article>
+      </div>`).join('');
+
+    grid.querySelectorAll('[data-add-slug]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        window.addToCart?.({
+          slug: btn.dataset.addSlug,
+          name: btn.dataset.name,
+          price: Number(btn.dataset.price),
+          image: btn.dataset.image,
+        });
+      });
+    });
+
+    grid.querySelectorAll('.product-card__wishlist').forEach(btn => {
+      btn.addEventListener('click', () => {
+        window.toggleWishlist?.(btn.dataset.slug, btn);
+        renderWishlist();
+      });
+    });
+  }
+
+  renderWishlist();
+</script>

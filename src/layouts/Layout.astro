@@ -104,14 +104,17 @@ const canonical = new URL(Astro.url.pathname, Astro.site).href;
             </a>
             <div class="account-dropdown" id="account-dropdown">
               <a href="/account/orders" class="account-dropdown__item">Order History</a>
+              <a href="/account/wishlist" class="account-dropdown__item">Wishlist</a>
               <a href="/account/profile" class="account-dropdown__item">Profile</a>
               <button type="button" class="account-dropdown__item account-dropdown__item--danger" id="logout-trigger">Logout</button>
             </div>
           </div>
-          <button class="icon-btn" id="cart-btn" aria-label="Open basket" aria-haspopup="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-            <span class="cart-badge" id="cart-count" data-count="0" aria-label="items in basket">0</span>
-          </button>
+          <div class="cart-menu" id="cart-menu">
+            <a href="/cart" class="icon-btn" id="cart-btn" aria-label="Open basket" aria-haspopup="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+              <span class="cart-badge" id="cart-count" data-count="0" aria-label="items in basket">0</span>
+            </a>
+          </div>
         </div>
       </div>
     </div>
@@ -147,31 +150,37 @@ const canonical = new URL(Astro.url.pathname, Astro.site).href;
       <div class="cart-empty">Your cart is empty — Pick sustainable gifts for your loved ones!</div>
     </div>
     <div class="cart-drawer__footer">
-      <div class="cart-customer-form">
-        <div class="form-group">
-          <label for="cust-name">Full name *</label>
-          <input type="text" id="cust-name" required autocomplete="name">
+      <details class="cart-customer-form" id="cust-details">
+        <summary class="cart-customer-form__summary">
+          <span>Delivery Details</span>
+          <svg class="cart-customer-form__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </summary>
+        <div class="cart-customer-form__body">
+          <div class="form-group">
+            <label for="cust-name">Full name *</label>
+            <input type="text" id="cust-name" required autocomplete="name">
+          </div>
+          <div class="form-group">
+            <label for="cust-email">Email *</label>
+            <input type="email" id="cust-email" required autocomplete="email">
+          </div>
+          <div class="form-group">
+            <label for="cust-phone">Contact number *</label>
+            <input type="tel" id="cust-phone" required autocomplete="tel">
+          </div>
+          <div class="form-group">
+            <label for="cust-address">Delivery address *</label>
+            <textarea id="cust-address" required autocomplete="street-address" placeholder="Address line, city, postcode"></textarea>
+          </div>
         </div>
-        <div class="form-group">
-          <label for="cust-email">Email *</label>
-          <input type="email" id="cust-email" required autocomplete="email">
-        </div>
-        <div class="form-group">
-          <label for="cust-phone">Contact number *</label>
-          <input type="tel" id="cust-phone" required autocomplete="tel">
-        </div>
-        <div class="form-group">
-          <label for="cust-address">Delivery address *</label>
-          <textarea id="cust-address" required autocomplete="street-address" placeholder="Address line, city, postcode"></textarea>
-        </div>
-      </div>
+      </details>
       <div class="cart-subtotal">
         <span class="cart-subtotal__label">Subtotal</span>
         <span class="cart-subtotal__amount" id="cart-total">£0.00</span>
       </div>
-      <button class="btn btn-primary cart-checkout-btn" id="checkout-btn">
-        Pay with Card →
-      </button>
+      <a href="/cart" class="btn btn-primary cart-checkout-btn" style="text-align:center;text-decoration:none;">
+        Checkout →
+      </a>
       <p class="cart-secure">🔒 Secure checkout via Stripe · Free returns · Plastic-free packaging</p>
     </div>
   </div>
@@ -363,10 +372,12 @@ const canonical = new URL(Astro.url.pathname, Astro.site).href;
     function validateCustomer(customer) {
       if (!customer.name || !customer.email || !customer.phone || !customer.address) {
         toast('Please fill in your name, email, contact number and address', 'error');
+        $('cust-details') && ($('cust-details').open = true);
         return false;
       }
       if (!/^\S+@\S+\.\S+$/.test(customer.email)) {
         toast('Please enter a valid email address', 'error');
+        $('cust-details') && ($('cust-details').open = true);
         return false;
       }
       return true;
@@ -389,7 +400,6 @@ const canonical = new URL(Astro.url.pathname, Astro.site).href;
         document.body.style.overflow = '';
       }
     }
-    $('cart-btn')?.addEventListener('click', openCart);
     $('cart-close')?.addEventListener('click', closeCart);
     overlay?.addEventListener('click', () => { closeNav(); closeCart(); });
     document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeNav(); closeCart(); } });
@@ -500,30 +510,6 @@ const canonical = new URL(Astro.url.pathname, Astro.site).href;
       toast('Added to basket ✓');
     };
 
-    // Checkout — POST to Stripe
-    $('checkout-btn')?.addEventListener('click', async () => {
-      const cart = getCart();
-      if (cart.length === 0) { toast('Your basket is empty', 'error'); return; }
-      const customer = readCustomerForm();
-      if (!validateCustomer(customer)) return;
-      const btn = $('checkout-btn');
-      btn.disabled = true;
-      btn.textContent = 'Redirecting…';
-      try {
-        const res = await fetch('/api/create-checkout', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ items: cart, note: getNote(), customer, userId: currentUserId, userEmail: currentUserEmail }),
-        });
-        const { url, error } = await res.json();
-        if (url) window.location.href = url;
-        else { toast(error || 'Checkout failed — please try again', 'error'); btn.disabled = false; btn.textContent = 'Pay with Card →'; }
-      } catch {
-        toast('Network error — please try again', 'error');
-        btn.disabled = false;
-        btn.textContent = 'Pay with Card →';
-      }
-    });
 
     // Wishlist
     const WL_KEY = 'oeg_wl';
@@ -644,8 +630,9 @@ const canonical = new URL(Astro.url.pathname, Astro.site).href;
     // Init
     updateBadge();
 
-    // Expose openCart globally for product pages
+    // Expose openCart/updateBadge globally for product pages and the /cart page
     window.openCart = openCart;
+    window.updateBadge = updateBadge;
   </script>
 </body>
 </html>

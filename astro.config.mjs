@@ -5,6 +5,11 @@ export default defineConfig({
   output: 'hybrid',   // static pages + serverless API routes
   adapter: vercel(),
   site: 'https://oneearthgifting.com',
+  redirects: {
+    '/delivery': '/',
+    '/privacy': '/',
+    '/terms': '/',
+  },
   vite: {
     server: {
       allowedHosts: 'all',

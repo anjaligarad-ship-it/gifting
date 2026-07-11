@@ -1,0 +1,70 @@
+---
+// Handles the OAuth callback redirect from Supabase after Google sign-in.
+// Supabase (PKCE flow) redirects here with ?code=... after the user approves.
+// The Supabase client auto-exchanges the code for a session; this page just
+// waits for that to complete then sends the user to their destination.
+export const prerender = false;
+
+const redirectTo = Astro.url.searchParams.get('redirect') || '/shop';
+---
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Signing you in… | One Earth Gifting</title>
+  <style>
+    body { font-family: sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: #f8f5f0; }
+    .box { text-align: center; color: #2d5a27; }
+    .spinner { width: 36px; height: 36px; border: 3px solid #d4e8c2; border-top-color: #2d5a27; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 1rem; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    p { margin: 0; font-size: 1rem; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <div class="spinner"></div>
+    <p>Signing you in…</p>
+  </div>
+  <script>
+    import { supabase } from '../../lib/supabaseClient.js';
+
+    async function handleCallback() {
+      // supabase-js v2 with detectSessionInUrl:true automatically exchanges
+      // the ?code= param for a session. We just need to wait for it.
+      const { data, error } = await supabase.auth.getSession();
+
+      if (error) {
+        console.error('Auth callback error:', error.message);
+        window.location.href = '/login?error=oauth_failed';
+        return;
+      }
+
+      if (data.session) {
+        // Session established — go to destination
+        const params = new URLSearchParams(window.location.search);
+        const dest = params.get('redirect') || '/shop';
+        window.location.href = dest;
+        return;
+      }
+
+      // No session yet — exchange the code manually as a fallback
+      const code = new URLSearchParams(window.location.search).get('code');
+      if (code) {
+        const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+        if (exchangeError) {
+          console.error('Code exchange failed:', exchangeError.message);
+          window.location.href = '/login?error=oauth_failed';
+          return;
+        }
+      }
+
+      const params = new URLSearchParams(window.location.search);
+      const dest = params.get('redirect') || '/shop';
+      window.location.href = dest;
+    }
+
+    handleCallback();
+  </script>
+</body>
+</html>

@@ -62,6 +62,15 @@ export async function POST({ request }) {
           .upsert({ user_id: userId, items: [], note: '', updated_at: new Date().toISOString() });
         if (cartClearError) console.error('Failed to clear cart after order:', cartClearError.message);
       }
+
+      const promoUserId = session.metadata?.first_order_promo_user_id;
+      if (promoUserId) {
+        const { error: promoError } = await supabaseAdmin
+          .from('first_discount_claims')
+          .update({ order_used: true, order_id: session.id, updated_at: new Date().toISOString() })
+          .eq('user_id', promoUserId);
+        if (promoError) console.error('Failed to mark first-order discount as used:', promoError.message);
+      }
     } catch (err) {
       console.error('Failed to process checkout.session.completed:', err.message);
     }
