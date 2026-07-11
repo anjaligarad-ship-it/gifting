@@ -9,8 +9,13 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "test": "vitest run",
-    "test:watch": "vitest"
+    "test": "vitest run --config vitest.config.js",
+    "test:unit": "vitest run --config vitest.config.js",
+    "test:unit:coverage": "vitest run --config vitest.config.js --coverage",
+    "test:component": "vitest run --config vitest.component.config.js",
+    "test:e2e": "playwright test",
+    "test:all": "npm run test:unit && npm run test:component",
+    "test:watch": "vitest --config vitest.config.js"
   },
   "dependencies": {
     "@astrojs/vercel": "^7.0.0",
@@ -21,6 +26,10 @@
     "twilio": "^6.0.2"
   },
   "devDependencies": {
+    "@playwright/test": "^1.61.1",
+    "@vitest/coverage-v8": "^4.1.10",
+    "happy-dom": "^20.10.6",
+    "playwright": "^1.61.1",
     "vitest": "^4.1.10"
   }
 }

@@ -38,8 +38,23 @@ export const prerender = true;
             <input type="tel" id="cp-phone" required autocomplete="tel">
           </div>
           <div class="form-group">
-            <label for="cp-address">Delivery address *</label>
-            <textarea id="cp-address" required autocomplete="street-address" placeholder="Address line, city, postcode"></textarea>
+            <label for="cp-addr-line1">Address line 1 *</label>
+            <input type="text" id="cp-addr-line1" required autocomplete="address-line1" placeholder="House number and street">
+            <p class="field-error" id="cp-addr-line1-err" style="color:#c0392b;font-size:0.8rem;margin:0.2rem 0 0;display:none;"></p>
+          </div>
+          <div class="form-group">
+            <label for="cp-addr-line2">Address line 2 <span style="font-weight:400;color:var(--text-light);">(optional)</span></label>
+            <input type="text" id="cp-addr-line2" autocomplete="address-line2" placeholder="Flat, apartment, etc.">
+          </div>
+          <div class="form-group">
+            <label for="cp-addr-town">Town / City *</label>
+            <input type="text" id="cp-addr-town" required autocomplete="address-level2">
+            <p class="field-error" id="cp-addr-town-err" style="color:#c0392b;font-size:0.8rem;margin:0.2rem 0 0;display:none;"></p>
+          </div>
+          <div class="form-group">
+            <label for="cp-addr-postcode">Postcode *</label>
+            <input type="text" id="cp-addr-postcode" required autocomplete="postal-code" placeholder="e.g. CV1 1GU" style="text-transform:uppercase;max-width:180px;">
+            <p class="field-error" id="cp-addr-postcode-err" style="color:#c0392b;font-size:0.8rem;margin:0.2rem 0 0;display:none;"></p>
           </div>
           <!-- Promo code entry -->
           <div style="margin-top:1rem;">
@@ -248,18 +263,51 @@ export const prerender = true;
     if ($('cp-name') && !$('cp-name').value) $('cp-name').value = c.name || session.user.user_metadata?.full_name || '';
     if ($('cp-email') && !$('cp-email').value) $('cp-email').value = c.email || session.user.email || '';
     if ($('cp-phone') && !$('cp-phone').value) $('cp-phone').value = c.phone || '';
-    if ($('cp-address') && !$('cp-address').value) $('cp-address').value = c.address || '';
+    if ($('cp-addr-line1') && !$('cp-addr-line1').value) $('cp-addr-line1').value = c.address?.line1 || '';
+    if ($('cp-addr-line2') && !$('cp-addr-line2').value) $('cp-addr-line2').value = c.address?.line2 || '';
+    if ($('cp-addr-town') && !$('cp-addr-town').value) $('cp-addr-town').value = c.address?.town || '';
+    if ($('cp-addr-postcode') && !$('cp-addr-postcode').value) $('cp-addr-postcode').value = c.address?.postcode || '';
   }
+
+  // UK postcode regex — mirrors server-side address.js
+  const UK_PC_RE = /^([A-Z]{1,2}\d[A-Z\d]?)\s*(\d[A-Z]{2})$/i;
+  function normalisePostcode(raw) {
+    if (!raw) return null;
+    const m = raw.trim().replace(/\s+/g, ' ').match(UK_PC_RE);
+    return m ? `${m[1].toUpperCase()} ${m[2].toUpperCase()}` : null;
+  }
+
+  function showFieldError(fieldId, msg) {
+    const el = $(`${fieldId}-err`);
+    if (el) { el.textContent = msg; el.style.display = msg ? 'block' : 'none'; }
+  }
+
+  // Validate postcode format inline on blur
+  $('cp-addr-postcode')?.addEventListener('blur', () => {
+    const raw = $('cp-addr-postcode')?.value;
+    const norm = normalisePostcode(raw);
+    if (norm) {
+      $('cp-addr-postcode').value = norm;
+      showFieldError('cp-addr-postcode', '');
+    } else if (raw?.trim()) {
+      showFieldError('cp-addr-postcode', 'Enter a valid UK postcode (e.g. CV1 1GU)');
+    }
+  });
 
   function readForm() {
     return {
       name: $('cp-name')?.value.trim() || '',
       email: $('cp-email')?.value.trim() || '',
       phone: $('cp-phone')?.value.trim() || '',
-      address: $('cp-address')?.value.trim() || '',
+      address: {
+        line1: $('cp-addr-line1')?.value.trim() || '',
+        line2: $('cp-addr-line2')?.value.trim() || '',
+        town: $('cp-addr-town')?.value.trim() || '',
+        postcode: normalisePostcode($('cp-addr-postcode')?.value) || $('cp-addr-postcode')?.value.trim() || '',
+      },
     };
   }
-  ['cp-name', 'cp-email', 'cp-phone', 'cp-address'].forEach(id => {
+  ['cp-name', 'cp-email', 'cp-phone', 'cp-addr-line1', 'cp-addr-line2', 'cp-addr-town', 'cp-addr-postcode'].forEach(id => {
     $(id)?.addEventListener('change', () => saveCustomer(readForm()));
   });
 
@@ -286,14 +334,16 @@ export const prerender = true;
     const cart = getCart();
     if (cart.length === 0) { toast('Your basket is empty', 'error'); return; }
     const customer = readForm();
-    if (!customer.name || !customer.email || !customer.phone || !customer.address) {
-      toast('Please fill in your name, email, contact number and address', 'error');
-      return;
-    }
-    if (!/^\S+@\S+\.\S+$/.test(customer.email)) {
-      toast('Please enter a valid email address', 'error');
-      return;
-    }
+    let hasErrors = false;
+    if (!customer.name) { toast('Please enter your full name', 'error'); return; }
+    if (!customer.email || !/^\S+@\S+\.\S+$/.test(customer.email)) { toast('Please enter a valid email address', 'error'); return; }
+    if (!customer.phone) { toast('Please enter your contact number', 'error'); return; }
+    if (!customer.address.line1) { showFieldError('cp-addr-line1', 'Address line 1 is required'); hasErrors = true; }
+    if (!customer.address.town) { showFieldError('cp-addr-town', 'Town / city is required'); hasErrors = true; }
+    const normPC = normalisePostcode(customer.address.postcode);
+    if (!normPC) { showFieldError('cp-addr-postcode', 'Enter a valid UK postcode (e.g. CV1 1GU)'); hasErrors = true; }
+    if (hasErrors) { toast('Please fix the address errors above', 'error'); return; }
+    customer.address.postcode = normPC;
     saveCustomer(customer);
 
     const btn = $('cp-checkout-btn');

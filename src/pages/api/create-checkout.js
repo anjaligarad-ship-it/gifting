@@ -6,6 +6,7 @@ import Stripe from 'stripe';
 import { products } from '../../data/products.js';
 import { PROMO_CODES } from '../../data/promoCodes.js';
 import { supabaseAdmin } from '../../lib/supabaseAdmin.js';
+import { validateAddress, formatAddress } from '../../lib/address.js';
 
 export const prerender = false;
 
@@ -33,13 +34,21 @@ export async function POST({ request }) {
     }
   }
 
-  if (!customer || !customer.name?.trim() || !customer.email?.trim() || !customer.phone?.trim() || !customer.address?.trim()) {
+  if (!customer || !customer.name?.trim() || !customer.email?.trim() || !customer.phone?.trim()) {
     return new Response(JSON.stringify({ error: 'Name, email, contact number and address are required' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
   }
 
   if (!/^\S+@\S+\.\S+$/.test(customer.email.trim())) {
     return new Response(JSON.stringify({ error: 'Please enter a valid email address' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
   }
+
+  // Validate structured address (G1)
+  const addrValidation = validateAddress(customer.address);
+  if (!addrValidation.ok) {
+    const firstError = Object.values(addrValidation.errors)[0];
+    return new Response(JSON.stringify({ error: firstError || 'Invalid delivery address' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+  }
+  const structuredAddress = addrValidation.normalised;
 
   const subtotal = items.reduce((s, item) => s + item.price * item.qty, 0);
 
@@ -123,7 +132,8 @@ export async function POST({ request }) {
         customer_name: customer.name,
         customer_email: customer.email,
         customer_phone: customer.phone,
-        customer_address: customer.address,
+        customer_address: formatAddress(structuredAddress),
+        customer_address_json: JSON.stringify(structuredAddress),
         user_id: userId || '',
         first_order_promo_user_id: promoApplied ? userId : '',
       },
