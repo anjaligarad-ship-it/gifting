@@ -41,16 +41,26 @@ function lineItemsText(lineItems) {
 
 export async function sendOrderEmails({ session, lineItems, customer }) {
   const orderRef = session.id;
-  const total = fmtGBP(session.amount_total);
-  const email = customer.email || session.customer_details?.email;
+  const total    = fmtGBP(session.amount_total);
+  const email    = customer.email || session.customer_details?.email;
 
-  const detailsHTML = `
-    <p><strong>Name:</strong> ${customer.name}</p>
-    <p><strong>Email:</strong> ${customer.email}</p>
-    <p><strong>Phone:</strong> ${customer.phone}</p>
-    <p><strong>Delivery address:</strong><br>${customer.address.replace(/\n/g, '<br>')}</p>
-    ${customer.note ? `<p><strong>Gift note:</strong> ${customer.note}</p>` : ''}
-  `;
+  const deliveryAddrHTML = customer.isGift && customer.recipientAddress
+    ? formatRecipientAddr(customer.recipientAddress)
+    : customer.address.replace(/\n/g, '<br>');
+
+  const deliveryAddrText = customer.isGift && customer.recipientAddress
+    ? formatRecipientAddrText(customer.recipientAddress)
+    : customer.address;
+
+  const giftBlockHTML = customer.isGift ? `
+    <div style="background:#f9f9f9;border-left:3px solid #4caf50;padding:0.75rem 1rem;margin:1rem 0;">
+      <p style="margin:0 0 0.4rem;font-weight:bold;">🎁 Gift order</p>
+      ${customer.giftMessage ? `<p style="margin:0 0 0.4rem;font-style:italic;">"${escHtml(customer.giftMessage)}"</p>` : ''}
+      ${customer.hidePrice ? '<p style="margin:0;font-size:0.85em;color:#555;">Prices hidden on packing slip</p>' : ''}
+    </div>` : '';
+
+  const deliveryEstimateHTML = customer.deliveryEstimate
+    ? `<p>🚚 <strong>Estimated delivery:</strong> ${escHtml(customer.deliveryEstimate)}</p>` : '';
 
   const itemsTable = `
     <table style="border-collapse:collapse;width:100%;margin:1rem 0;">
@@ -59,27 +69,41 @@ export async function sendOrderEmails({ session, lineItems, customer }) {
     </table>
   `;
 
+  const detailsHTML = `
+    <p><strong>Name:</strong> ${escHtml(customer.name)}</p>
+    <p><strong>Email:</strong> ${escHtml(customer.email)}</p>
+    <p><strong>Phone:</strong> ${escHtml(customer.phone)}</p>
+    <p><strong>Billing address:</strong><br>${customer.address.replace(/\n/g, '<br>')}</p>
+    ${customer.isGift && customer.recipientAddress ? `<p><strong>Recipient address:</strong><br>${deliveryAddrHTML}</p>` : ''}
+    ${customer.giftMessage ? `<p><strong>Gift message:</strong> ${escHtml(customer.giftMessage)}</p>` : ''}
+    ${customer.hidePrice ? '<p><strong>Hide prices:</strong> Yes</p>' : ''}
+    ${customer.note ? `<p><strong>Gift note:</strong> ${escHtml(customer.note)}</p>` : ''}
+    ${customer.deliveryEstimate ? `<p><strong>Delivery estimate:</strong> ${escHtml(customer.deliveryEstimate)}</p>` : ''}
+  `;
+
   // Confirmation email to the customer
   if (email) {
     await sendEmail({
       to: email,
       subject: `Order confirmed — One Earth Gifting (${orderRef})`,
       html: `
-        <h2>Thank you for your order, ${customer.name}!</h2>
+        <h2>Thank you for your order, ${escHtml(customer.name)}!</h2>
         <p>We've received your payment and your order is being prepared.</p>
+        ${giftBlockHTML}
         ${itemsTable}
         <p><strong>Total paid:</strong> ${total}</p>
-        <p><strong>Delivery address:</strong><br>${customer.address.replace(/\n/g, '<br>')}</p>
-        <p>We'll let you know once it's on its way. Thank you for choosing sustainable gifting!</p>
+        <p><strong>Delivering to:</strong><br>${deliveryAddrHTML}</p>
+        ${deliveryEstimateHTML}
+        <p>We'll let you know once it's on its way. Thank you for choosing sustainable gifting! 🌿</p>
       `,
-      text: `Thank you for your order, ${customer.name}!\n\nWe've received your payment and your order is being prepared.\n\n${lineItemsText(lineItems)}\n\nTotal paid: ${total}\nDelivery address: ${customer.address}\n\nWe'll let you know once it's on its way. Thank you for choosing sustainable gifting!`,
+      text: `Thank you for your order, ${customer.name}!\n\nWe've received your payment and your order is being prepared.\n\n${lineItemsText(lineItems)}\n\nTotal paid: ${total}\nDelivering to: ${deliveryAddrText}\n${customer.deliveryEstimate ? `Estimated delivery: ${customer.deliveryEstimate}\n` : ''}${customer.isGift && customer.giftMessage ? `\nGift message: "${customer.giftMessage}"\n` : ''}\nThank you for choosing sustainable gifting!`,
     });
   }
 
-  // Notification email to One Earth Gifting with full customer + payment details
+  // Notification email to the team
   await sendEmail({
     to: NOTIFY_EMAIL,
-    subject: `New order received — ${orderRef} (${total})`,
+    subject: `New order received — ${orderRef} (${total})${customer.isGift ? ' 🎁' : ''}`,
     html: `
       <h2>New order received</h2>
       ${detailsHTML}
@@ -88,6 +112,18 @@ export async function sendOrderEmails({ session, lineItems, customer }) {
       <p><strong>Stripe session ID:</strong> ${orderRef}</p>
       <p><strong>Payment status:</strong> ${session.payment_status}</p>
     `,
-    text: `New order received\n\nName: ${customer.name}\nEmail: ${customer.email}\nPhone: ${customer.phone}\nDelivery address: ${customer.address}\n${customer.note ? `Gift note: ${customer.note}\n` : ''}\n${lineItemsText(lineItems)}\n\nTotal paid: ${total}\nStripe session ID: ${orderRef}\nPayment status: ${session.payment_status}`,
+    text: `New order received\n\nName: ${customer.name}\nEmail: ${customer.email}\nPhone: ${customer.phone}\nBilling: ${customer.address}\n${customer.isGift && customer.recipientAddress ? `Recipient: ${deliveryAddrText}\n` : ''}${customer.giftMessage ? `Gift message: "${customer.giftMessage}"\n` : ''}${customer.note ? `Note: ${customer.note}\n` : ''}${customer.deliveryEstimate ? `Delivery estimate: ${customer.deliveryEstimate}\n` : ''}\n${lineItemsText(lineItems)}\n\nTotal paid: ${total}\nStripe session ID: ${orderRef}\nPayment status: ${session.payment_status}`,
   });
+}
+
+function escHtml(str) {
+  return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function formatRecipientAddr(addr) {
+  return [addr.name, addr.line1, addr.line2, addr.town, addr.postcode].filter(Boolean).join('<br>');
+}
+
+function formatRecipientAddrText(addr) {
+  return [addr.name, addr.line1, addr.line2, addr.town, addr.postcode].filter(Boolean).join(', ');
 }

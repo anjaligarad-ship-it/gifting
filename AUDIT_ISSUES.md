@@ -20,8 +20,8 @@ Single source of truth. Work lowest-score group first, top-to-bottom within each
 
 ## GROUP 3 — Delivery & logistics (scorecard: 3/10)
 
-- [ ] **D1** Estimated delivery dates by postcode — date calculator: 1-day dispatch (bank holidays included for dispatch); carrier leg in working days Mon–Fri; `carrierSkipsBankHolidays` flag (default true); special-zone map (+1–2 days for BT/IV/HS/KW/ZE/GY/JE/IM); Europe/London timezone; display "arrives by Wednesday 15 July".
-- [ ] **D2** Order confirmation email — already using Resend; enhance payload with structured address, gift flag, delivery estimate; verify trigger on webhook.
+- [x] **D1** Estimated delivery dates by postcode — date calculator: 1-day dispatch (bank holidays included for dispatch); carrier leg in working days Mon–Fri; `carrierSkipsBankHolidays` flag (default true); special-zone map (+1–2 days for BT/IV/HS/KW/ZE/GY/JE/IM); Europe/London timezone; display "arrives by Wednesday 15 July". Done via src/lib/delivery.js + cart.astro delivery option cards.
+- [x] **D2** Order confirmation email — enhanced: structured billing/recipient address, gift block (message + hide-price note), delivery estimate from computeArrivalDate + GOV.UK bank holiday feed; HTML escaping for all customer-supplied strings; team notification includes all gift/shipping metadata.
 - [ ] **D3** Basic inventory — stock field per product; decrement on order via webhook; "Only N left" badge at ≤ 3; block add-to-basket at 0 server-side.
 
 ## GROUP 4 — Trust & consistency (scorecard: 4/10)

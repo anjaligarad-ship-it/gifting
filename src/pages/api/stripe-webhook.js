@@ -5,6 +5,7 @@
 import Stripe from 'stripe';
 import { sendOrderEmails } from '../../lib/email.js';
 import { supabaseAdmin } from '../../lib/supabaseAdmin.js';
+import { SHIPPING_OPTIONS, getBankHolidaySet, computeArrivalDate, formatArrivalDate } from '../../lib/delivery.js';
 
 export const prerender = false;
 
@@ -27,12 +28,37 @@ export async function POST({ request }) {
 
     try {
       const lineItems = await stripe.checkout.sessions.listLineItems(session.id, { limit: 100 });
+
+      const meta = session.metadata || {};
+      const isGift = meta.is_gift === 'true';
+      let recipientAddress = null;
+      try { recipientAddress = meta.recipient_address_json ? JSON.parse(meta.recipient_address_json) : null; } catch {}
+
+      // Compute delivery estimate
+      const shippingOpt = SHIPPING_OPTIONS.find(o => o.id === meta.selected_shipping_id) || SHIPPING_OPTIONS[0];
+      const deliveryPostcode = isGift && recipientAddress?.postcode
+        ? recipientAddress.postcode
+        : (meta.customer_address_json ? (() => { try { return JSON.parse(meta.customer_address_json).postcode; } catch { return ''; } })() : '');
+      const bankHolidays = await getBankHolidaySet();
+      const arrivalDate  = computeArrivalDate({
+        orderDate: new Date(),
+        transitWorkingDays: shippingOpt.days,
+        postcode: deliveryPostcode,
+        bankHolidays,
+      });
+      const deliveryEstimate = `${shippingOpt.label} — ${formatArrivalDate(arrivalDate)}`;
+
       const customer = {
-        name: session.metadata?.customer_name || session.customer_details?.name || '',
-        email: session.metadata?.customer_email || session.customer_details?.email || '',
-        phone: session.metadata?.customer_phone || session.customer_details?.phone || '',
-        address: session.metadata?.customer_address || '',
-        note: session.metadata?.gift_note || '',
+        name: meta.customer_name || session.customer_details?.name || '',
+        email: meta.customer_email || session.customer_details?.email || '',
+        phone: meta.customer_phone || session.customer_details?.phone || '',
+        address: meta.customer_address || '',
+        note: meta.gift_note || '',
+        isGift,
+        giftMessage: meta.gift_message || '',
+        hidePrice: meta.hide_price === 'true',
+        recipientAddress,
+        deliveryEstimate,
       };
 
       await sendOrderEmails({ session, lineItems: lineItems.data, customer });
