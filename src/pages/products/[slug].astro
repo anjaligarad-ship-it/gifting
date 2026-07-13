@@ -118,7 +118,9 @@ const mainImage = product.images[0] ? `/images/${product.images[0]}` : null;
               {product.deliveryNotice && (
                 <div class="delivery-notice">📦 {product.deliveryNotice}</div>
               )}
-              <div class="product-actions" data-restricted-to={product.restrictedTo || ''}>
+              <!-- D3: stock badge — populated by client JS -->
+              <p id="stock-badge" style="display:none;font-size:0.85rem;font-weight:600;margin-bottom:0.4rem;color:#c0392b;"></p>
+              <div class="product-actions" data-restricted-to={product.restrictedTo || ''} data-slug={product.slug}>
                 <button
                   class="btn btn-primary"
                   id="atc-btn"
@@ -234,6 +236,27 @@ const mainImage = product.images[0] ? `/images/${product.images[0]}` : null;
   const wlBtn = document.getElementById('wl-btn');
   if (slug && wlBtn && window.isWishlisted?.(slug)) wlBtn.classList.add('active');
   wlBtn?.addEventListener('click', () => window.toggleWishlist?.(slug, wlBtn));
+
+  // D3: stock badge + Add to Basket guard
+  (async () => {
+    const actions = document.querySelector('.product-actions[data-slug]');
+    if (!actions) return;
+    const pSlug = actions.dataset.slug;
+    const atcBtn = document.getElementById('atc-btn');
+    const badge  = document.getElementById('stock-badge');
+    try {
+      const res  = await fetch(`/api/inventory?slugs=${encodeURIComponent(pSlug)}`);
+      const data = await res.json();
+      const avail = data[pSlug];
+      if (avail === null || avail === undefined) return; // unlimited
+      if (avail === 0) {
+        if (atcBtn) { atcBtn.disabled = true; atcBtn.textContent = 'Out of stock'; }
+        if (badge)  { badge.textContent = 'Out of stock'; badge.style.display = 'block'; }
+      } else if (avail <= 3) {
+        if (badge) { badge.textContent = `Only ${avail} left!`; badge.style.display = 'block'; }
+      }
+    } catch { /* fail silently — stock badge is best-effort */ }
+  })();
 </script>
 
 <style>

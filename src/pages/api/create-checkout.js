@@ -52,6 +52,22 @@ export async function POST({ request }) {
   const subtotal  = items.reduce((s, item) => s + item.price * item.qty, 0);
   const itemCount = items.reduce((s, item) => s + item.qty, 0);
 
+  // Stock check (D3) — query product_inventory; null = unlimited
+  const slugs = items.map(i => i.slug);
+  const { data: stockRows } = await supabaseAdmin
+    .from('product_inventory')
+    .select('slug, available_stock')
+    .in('slug', slugs);
+  const stockMap = Object.fromEntries((stockRows || []).map(r => [r.slug, r.available_stock]));
+  for (const item of items) {
+    const avail = stockMap[item.slug] ?? null; // null = unlimited
+    if (avail !== null && item.qty > avail) {
+      const name = item.name || item.slug;
+      const msg = avail === 0 ? `${name} is out of stock.` : `Only ${avail} of ${name} left in stock.`;
+      return new Response(JSON.stringify({ error: msg }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+    }
+  }
+
   // Resolve shipping server-side — never trust the client price
   const shippingOpt = SHIPPING_OPTIONS.find(o => o.id === selectedShippingId) || SHIPPING_OPTIONS[0];
   const shippingPence = isFreeDelivery({ subtotal, itemCount }) ? 0 : shippingOpt.price;

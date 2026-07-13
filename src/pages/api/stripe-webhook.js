@@ -89,6 +89,23 @@ export async function POST({ request }) {
         if (cartClearError) console.error('Failed to clear cart after order:', cartClearError.message);
       }
 
+      // Decrement inventory (D3) — best-effort, never blocks the response
+      try {
+        const slugQtyMap = {};
+        for (const li of lineItems.data) {
+          const slug = li.price?.product_data?.metadata?.slug || li.description;
+          if (slug && slug !== shippingOpt.label) {
+            slugQtyMap[slug] = (slugQtyMap[slug] || 0) + (li.quantity || 1);
+          }
+        }
+        for (const [slug, qty] of Object.entries(slugQtyMap)) {
+          // Decrement using Supabase RPC for atomic update
+          await supabaseAdmin.rpc('decrement_stock', { p_slug: slug, p_qty: qty });
+        }
+      } catch (invErr) {
+        console.error('Inventory decrement error:', invErr.message);
+      }
+
       const promoUserId = session.metadata?.first_order_promo_user_id;
       if (promoUserId) {
         const { error: promoError } = await supabaseAdmin

@@ -22,7 +22,7 @@ Single source of truth. Work lowest-score group first, top-to-bottom within each
 
 - [x] **D1** Estimated delivery dates by postcode — date calculator: 1-day dispatch (bank holidays included for dispatch); carrier leg in working days Mon–Fri; `carrierSkipsBankHolidays` flag (default true); special-zone map (+1–2 days for BT/IV/HS/KW/ZE/GY/JE/IM); Europe/London timezone; display "arrives by Wednesday 15 July". Done via src/lib/delivery.js + cart.astro delivery option cards.
 - [x] **D2** Order confirmation email — enhanced: structured billing/recipient address, gift block (message + hide-price note), delivery estimate from computeArrivalDate + GOV.UK bank holiday feed; HTML escaping for all customer-supplied strings; team notification includes all gift/shipping metadata.
-- [ ] **D3** Basic inventory — stock field per product; decrement on order via webhook; "Only N left" badge at ≤ 3; block add-to-basket at 0 server-side.
+- [x] **D3** Basic inventory — stock field per product; decrement on order via webhook; "Only N left" badge at ≤ 3; block add-to-basket at 0 server-side. stock:null added to products.js (unlimited default); product_inventory Supabase table (scripts/migrate-inventory.sql) with atomic decrement_stock RPC; GET /api/inventory for client badge; server-side stock gate in create-checkout.js; atomic decrement in stripe-webhook.js.
 
 ## GROUP 4 — Trust & consistency (scorecard: 4/10)
 
