@@ -24,6 +24,11 @@ export async function POST({ request }) {
     return json({ valid: false, error: 'Invalid promo code.' });
   }
 
+  // Check expiry
+  if (promo.expiresAt && new Date(promo.expiresAt) < new Date()) {
+    return json({ valid: false, error: 'This promo code has expired.' });
+  }
+
   // Check email is verified
   const { data: { user }, error: userError } = await supabaseAdmin.auth.admin.getUserById(userId);
   if (userError || !user) return json({ valid: false, error: 'Could not verify your account.' }, 400);

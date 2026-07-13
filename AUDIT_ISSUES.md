@@ -14,9 +14,9 @@ Single source of truth. Work lowest-score group first, top-to-bottom within each
 ## GROUP 2 — Checkout & payments (scorecard: 3/10)
 
 - [x] **C1** Delivery option selection with shipping charged — pre-Stripe delivery step: Standard (3–5 days, £3.95), Express (1–2 days, £6.95); free delivery config (value threshold £50 / item threshold 20); selected shipping added to total server-side before Stripe charge. (+29 unit) — src/lib/delivery.js with arrival dates, special-zone map, bank-holiday skip; delivery option cards in cart.astro with postcode-aware arrival dates; shipping as Stripe line item; isFreeDelivery gating server-side.
-- [ ] **C2** Basket quantity controls and item removal — already implemented in drawer+cart; verify server-side total recalc and empty-state.
+- [x] **C2** Basket quantity controls and item removal — already implemented in drawer+cart; verify server-side total recalc and empty-state. Confirmed: subtotal always recalculated from items array server-side; empty cart hides form; qty/remove buttons update localStorage and re-render.
 - [!] **C3** Wallet payments (Apple Pay / Google Pay / Link) — BLOCKED: needs live browser with payment hardware + Stripe domain verification. Scaffold Payment Element config; cannot fully test in CI.
-- [ ] **C4** Discount code support — already implemented (FIRST 20%, GAURAVP 30%); verify expiry/usage-limit fields added to PROMO_CODES schema.
+- [x] **C4** Discount code support — already implemented (FIRST 20%, GAURAVP 30%); verify expiry/usage-limit fields added to PROMO_CODES schema. Added expiresAt + maxUsesPerCode to schema; apply.js checks expiresAt before any DB call; +6 unit tests for schema validation.
 
 ## GROUP 3 — Delivery & logistics (scorecard: 3/10)
 

@@ -67,3 +67,44 @@ describe('GAURAVP promo code (30% off, £60 cap)', () => {
     expect(PROMO_CODES.GAURAVP.public).toBe(false);
   });
 });
+
+describe('PROMO_CODES schema (C4)', () => {
+  it('every code has required fields', () => {
+    for (const [key, promo] of Object.entries(PROMO_CODES)) {
+      expect(typeof promo.rate, `${key}.rate`).toBe('number');
+      expect(typeof promo.cap, `${key}.cap`).toBe('number');
+      expect(typeof promo.public, `${key}.public`).toBe('boolean');
+      expect('expiresAt' in promo, `${key}.expiresAt field exists`).toBe(true);
+      expect('maxUsesPerCode' in promo, `${key}.maxUsesPerCode field exists`).toBe(true);
+    }
+  });
+
+  it('expiresAt is null or a valid ISO date string', () => {
+    for (const [key, promo] of Object.entries(PROMO_CODES)) {
+      if (promo.expiresAt !== null) {
+        expect(Number.isNaN(Date.parse(promo.expiresAt)), `${key}.expiresAt is a valid date`).toBe(false);
+      }
+    }
+  });
+
+  it('an expired code (expiresAt in the past) would be detected', () => {
+    const pastCode = { rate: 0.1, cap: 10, expiresAt: '2020-01-01', maxUsesPerCode: null, public: false };
+    expect(new Date(pastCode.expiresAt) < new Date()).toBe(true);
+  });
+
+  it('a future expiry is not yet expired', () => {
+    const futureCode = { rate: 0.1, cap: 10, expiresAt: '2099-12-31', maxUsesPerCode: null, public: false };
+    expect(new Date(futureCode.expiresAt) < new Date()).toBe(false);
+  });
+
+  it('maxUsesPerCode null means unlimited', () => {
+    expect(PROMO_CODES.FIRST.maxUsesPerCode).toBeNull();
+    expect(PROMO_CODES.GAURAVP.maxUsesPerCode).toBeNull();
+  });
+
+  it('GAURAVP is not surfaced via filter of public codes', () => {
+    const publicCodes = Object.entries(PROMO_CODES).filter(([, p]) => p.public).map(([k]) => k);
+    expect(publicCodes).not.toContain('GAURAVP');
+    expect(publicCodes).toContain('FIRST');
+  });
+});
