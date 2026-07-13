@@ -109,6 +109,13 @@ export const prerender = true;
             </div>
           </div>
 
+          <!-- Delivery options (C1) -->
+          <div id="cp-delivery-section" style="margin-top:1.75rem;">
+            <h3 style="font-size:0.95rem;font-weight:700;margin-bottom:0.75rem;color:var(--text-dark);">Delivery</h3>
+            <div id="cp-delivery-options" style="display:flex;flex-direction:column;gap:0.6rem;"></div>
+            <p id="cp-delivery-free-note" style="display:none;font-size:0.82rem;color:#2d7a3a;font-weight:600;margin-top:0.4rem;">🌿 Free delivery on this order</p>
+          </div>
+
           <!-- Promo code entry -->
           <div style="margin-top:1rem;">
             <label for="cp-promo-input" style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:0.4rem;">Promotion Code</label>
@@ -135,6 +142,10 @@ export const prerender = true;
               <span>Subtotal</span>
               <span id="cp-subtotal">£0.00</span>
             </div>
+            <div id="cp-shipping-row" style="display:flex;justify-content:space-between;font-size:0.95rem;color:var(--text-light);">
+              <span id="cp-shipping-label">Delivery</span>
+              <span id="cp-shipping-price">—</span>
+            </div>
             <div id="cp-discount-row" style="display:none;justify-content:space-between;font-size:0.95rem;font-weight:600;color:#2d7a3a;">
               <span id="cp-discount-label">Discount</span>
               <span id="cp-promo-discount"></span>
@@ -143,7 +154,6 @@ export const prerender = true;
               <span>Total to pay</span>
               <span id="cp-total">£0.00</span>
             </div>
-            <p style="font-size:0.78rem;color:var(--text-light);margin:0;">+ shipping (selected at checkout)</p>
           </div>
           <button type="button" class="btn btn-primary cart-checkout-btn" id="cp-checkout-btn">Pay with Card →</button>
           <p class="cart-secure">🔒 Secure checkout via Stripe · Free returns · Plastic-free packaging</p>
@@ -163,6 +173,84 @@ export const prerender = true;
   function getNote() { try { return localStorage.getItem('oeg_note') || ''; } catch { return ''; } }
   function getCustomer() { try { return JSON.parse(localStorage.getItem('oeg_customer') || '{}'); } catch { return {}; } }
   function saveCustomer(c) { try { localStorage.setItem('oeg_customer', JSON.stringify(c)); } catch {} }
+
+  // ── Delivery config (mirrors src/lib/delivery.js) ──────────────────────────
+  const SHIPPING_OPTIONS = [
+    { id: 'standard', label: 'Standard delivery', days: 5, price: 395, subtitle: '3–5 working days' },
+    { id: 'express',  label: 'Express delivery',  days: 2, price: 695, subtitle: '1–2 working days' },
+  ];
+  const FREE_DELIVERY_VALUE  = 50;
+  const FREE_DELIVERY_ITEMS  = 20;
+  const SPECIAL_ZONES = { BT:2, IV:2, HS:2, KW:2, ZE:2, GY:2, JE:2, IM:2 };
+
+  let selectedShippingId = 'standard';
+
+  function isDeliveryFree(subtotal, itemCount) {
+    return subtotal >= FREE_DELIVERY_VALUE || itemCount >= FREE_DELIVERY_ITEMS;
+  }
+
+  function specialExtraDays(postcode) {
+    if (!postcode) return 0;
+    const prefix = postcode.trim().toUpperCase().replace(/\d.*$/, '');
+    return SPECIAL_ZONES[prefix] ?? 0;
+  }
+
+  function addWorkingDays(startDate, n) {
+    let d = new Date(startDate);
+    while (n > 0) {
+      d.setDate(d.getDate() + 1);
+      const wd = d.toLocaleDateString('en-GB', { timeZone: 'Europe/London', weekday: 'short' });
+      if (wd !== 'Sat' && wd !== 'Sun') n--;
+    }
+    return d;
+  }
+
+  function arrivalLabel(opt, postcode) {
+    const dispatch = addWorkingDays(new Date(), 1);
+    const total = opt.days + specialExtraDays(postcode);
+    const arrival = addWorkingDays(dispatch, total);
+    return arrival.toLocaleDateString('en-GB', {
+      timeZone: 'Europe/London', weekday: 'long', day: 'numeric', month: 'long',
+    });
+  }
+
+  function renderDeliveryOptions() {
+    const container = $('cp-delivery-options');
+    const freeNote  = $('cp-delivery-free-note');
+    if (!container) return;
+
+    const cart      = getCart();
+    const subtotal  = cart.reduce((s, i) => s + i.price * i.qty, 0);
+    const itemCount = cart.reduce((s, i) => s + i.qty, 0);
+    const free      = isDeliveryFree(subtotal, itemCount);
+    const postcode  = $('cp-addr-postcode')?.value.trim() || '';
+
+    if (freeNote) freeNote.style.display = free ? 'block' : 'none';
+
+    container.innerHTML = SHIPPING_OPTIONS.map(opt => {
+      const effectivePrice = free ? 0 : opt.price;
+      const priceStr = effectivePrice === 0 ? 'Free' : `£${(effectivePrice / 100).toFixed(2)}`;
+      const arrStr   = arrivalLabel(opt, postcode);
+      const checked  = selectedShippingId === opt.id;
+      return `
+        <label class="delivery-option${checked ? ' selected' : ''}" data-id="${opt.id}" style="display:flex;align-items:center;gap:0.85rem;padding:0.85rem 1rem;border:1.5px solid ${checked ? 'var(--forest)' : 'var(--border)'};border-radius:var(--radius-md);cursor:pointer;background:${checked ? 'color-mix(in srgb,var(--forest) 6%,white)' : 'transparent'};">
+          <input type="radio" name="cp-delivery" value="${opt.id}" ${checked ? 'checked' : ''} style="accent-color:var(--forest);width:1.1rem;height:1.1rem;">
+          <div style="flex:1;">
+            <div style="font-weight:600;font-size:0.92rem;">${opt.label} <span style="font-weight:400;color:var(--text-light);font-size:0.85rem;">· ${opt.subtitle}</span></div>
+            <div style="font-size:0.8rem;color:var(--text-light);margin-top:0.15rem;">Arrives by ${arrStr}</div>
+          </div>
+          <div style="font-weight:700;font-size:0.95rem;color:${effectivePrice === 0 ? '#2d7a3a' : 'var(--text-dark)'};">${priceStr}</div>
+        </label>`;
+    }).join('');
+
+    container.querySelectorAll('input[name="cp-delivery"]').forEach(radio => {
+      radio.addEventListener('change', () => {
+        selectedShippingId = radio.value;
+        renderDeliveryOptions();
+        updateForm();
+      });
+    });
+  }
 
   // Applied promo state — session-only, re-validated server-side at checkout
   let appliedPromoCode = null;
@@ -286,15 +374,26 @@ export const prerender = true;
 
     $('cart-page-login-prompt').hidden = true;
     $('cart-page-form-wrap').hidden = false;
-    const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0);
+    renderDeliveryOptions();
+    const subtotal  = cart.reduce((s, i) => s + i.price * i.qty, 0);
+    const itemCount = cart.reduce((s, i) => s + i.qty, 0);
+    const free      = isDeliveryFree(subtotal, itemCount);
+    const selOpt    = SHIPPING_OPTIONS.find(o => o.id === selectedShippingId) || SHIPPING_OPTIONS[0];
+    const shippingPence = free ? 0 : selOpt.price;
+    const shipping  = shippingPence / 100;
 
     const discountPence = appliedPromoCode
       ? Math.round(Math.min(subtotal * appliedDiscountRate, appliedDiscountCap) * 100)
       : 0;
     const discount = discountPence / 100;
-    const total = Math.max(0, subtotal - discount);
+    const total = Math.max(0, subtotal - discount + shipping);
 
     $('cp-subtotal').textContent = fmt(subtotal);
+
+    const shippingPriceEl = $('cp-shipping-price');
+    const shippingLabelEl = $('cp-shipping-label');
+    if (shippingPriceEl) shippingPriceEl.textContent = shippingPence === 0 ? 'Free' : fmt(shipping);
+    if (shippingLabelEl) shippingLabelEl.textContent = selOpt.label;
 
     const promoApplied = $('cp-promo-applied');
     const discountRow = $('cp-discount-row');
@@ -362,6 +461,7 @@ export const prerender = true;
     } else if (raw?.trim()) {
       showFieldError('cp-addr-postcode', 'Enter a valid UK postcode (e.g. CV1 1GU)');
     }
+    renderDeliveryOptions(); // refresh arrival date when postcode changes
   });
 
   function readForm() {
@@ -450,6 +550,7 @@ export const prerender = true;
           recipientAddress: customer.recipientAddress || null,
           giftMessage: customer.giftMessage || '',
           hidePrice: customer.hidePrice || false,
+          selectedShippingId,
           userId: session?.user?.id || null, userEmail: session?.user?.email || null,
           promoCode: appliedPromoCode || null,
         }),

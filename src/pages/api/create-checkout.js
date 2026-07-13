@@ -7,18 +7,17 @@ import { products } from '../../data/products.js';
 import { PROMO_CODES } from '../../data/promoCodes.js';
 import { supabaseAdmin } from '../../lib/supabaseAdmin.js';
 import { validateAddress, formatAddress } from '../../lib/address.js';
+import { SHIPPING_OPTIONS, isFreeDelivery } from '../../lib/delivery.js';
 
 export const prerender = false;
-
-const FREE_DELIVERY_THRESHOLD = 50;
 
 export async function POST({ request }) {
   const stripe = new Stripe(import.meta.env.STRIPE_SECRET_KEY);
   const siteUrl = import.meta.env.PUBLIC_SITE_URL || 'https://oneearthgifting.com';
 
-  let items, note, customer, userId, userEmail, promoCode, isGift, recipientAddress, giftMessage, hidePrice;
+  let items, note, customer, userId, userEmail, promoCode, isGift, recipientAddress, giftMessage, hidePrice, selectedShippingId;
   try {
-    ({ items, note, customer, userId, userEmail, promoCode, isGift, recipientAddress, giftMessage, hidePrice } = await request.json());
+    ({ items, note, customer, userId, userEmail, promoCode, isGift, recipientAddress, giftMessage, hidePrice, selectedShippingId } = await request.json());
   } catch {
     return new Response(JSON.stringify({ error: 'Invalid request body' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
   }
@@ -50,7 +49,12 @@ export async function POST({ request }) {
   }
   const structuredAddress = addrValidation.normalised;
 
-  const subtotal = items.reduce((s, item) => s + item.price * item.qty, 0);
+  const subtotal  = items.reduce((s, item) => s + item.price * item.qty, 0);
+  const itemCount = items.reduce((s, item) => s + item.qty, 0);
+
+  // Resolve shipping server-side — never trust the client price
+  const shippingOpt = SHIPPING_OPTIONS.find(o => o.id === selectedShippingId) || SHIPPING_OPTIONS[0];
+  const shippingPence = isFreeDelivery({ subtotal, itemCount }) ? 0 : shippingOpt.price;
 
   let discounts;
   let promoApplied = false;
@@ -78,7 +82,6 @@ export async function POST({ request }) {
   }
 
   // Build Stripe line items
-  // If you have Stripe Price IDs set, use them. Otherwise use price_data (simpler, no product setup needed).
   const lineItems = items.map(item => ({
     price_data: {
       currency: 'gbp',
@@ -87,10 +90,22 @@ export async function POST({ request }) {
         images: item.image ? [encodeURI(`${siteUrl}${item.image}`)] : [],
         metadata: { slug: item.slug },
       },
-      unit_amount: Math.round(item.price * 100), // pence
+      unit_amount: Math.round(item.price * 100),
     },
     quantity: item.qty,
   }));
+
+  // Add shipping as a line item so Stripe total matches what the customer saw
+  if (shippingPence > 0) {
+    lineItems.push({
+      price_data: {
+        currency: 'gbp',
+        product_data: { name: shippingOpt.label },
+        unit_amount: shippingPence,
+      },
+      quantity: 1,
+    });
+  }
 
   try {
     const session = await stripe.checkout.sessions.create({
@@ -101,32 +116,9 @@ export async function POST({ request }) {
       success_url: `${siteUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${siteUrl}/cart`,
       shipping_address_collection: { allowed_countries: ['GB'] },
-      shipping_options: [
-        ...(subtotal >= FREE_DELIVERY_THRESHOLD
-          ? [{
-              shipping_rate_data: {
-                type: 'fixed_amount',
-                fixed_amount: { amount: 0, currency: 'gbp' },
-                display_name: 'Free delivery over £50',
-              },
-            }]
-          : []),
-        {
-          shipping_rate_data: {
-            type: 'fixed_amount',
-            fixed_amount: { amount: 395, currency: 'gbp' },
-            display_name: 'Standard delivery (3 to 5 working days)',
-          },
-        },
-        {
-          shipping_rate_data: {
-            type: 'fixed_amount',
-            fixed_amount: { amount: 695, currency: 'gbp' },
-            display_name: 'Express delivery (1 to 2 working days)',
-          },
-        },
-      ],
       metadata: {
+        selected_shipping_id: shippingOpt.id,
+        shipping_pence: String(shippingPence),
         gift_note: note || '',
         gift_message: giftMessage || '',
         is_gift: isGift ? 'true' : 'false',
