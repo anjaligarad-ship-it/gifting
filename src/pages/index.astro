@@ -4,12 +4,26 @@ export const prerender = true;
 ---
 <Layout title="One Earth Gifting | Sustainable Gifts for People Who Care">
 
+  <!-- S3: WebSite structured data — homepage only, no aggregateRating until real reviews -->
+  <script type="application/ld+json" set:html={JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "One Earth Gifting",
+    "url": "https://oneearthgifting.com",
+    "description": "Curated sustainable gifts for individuals and businesses. Ethically sourced, plastic free packaged.",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": { "@type": "EntryPoint", "urlTemplate": "https://oneearthgifting.com/shop?q={search_term_string}" },
+      "query-input": "required name=search_term_string"
+    }
+  })} />
+
   <!-- Hero -->
   <section class="hero" aria-label="Hero">
     <div class="hero__media">
       <picture>
-        <source media="(max-width: 768px)" srcset="/images/Hero(2).png">
-        <img src="/images/Hero (1).png" alt="One Earth Gifting" loading="eager">
+        <source media="(max-width: 768px)" srcset="/images/Hero(2).png" width="1080" height="1920">
+        <img src="/images/hero-1.png" alt="One Earth Gifting" loading="eager" width="1920" height="1080">
       </picture>
     </div>
     <div class="hero__content">
@@ -30,7 +44,7 @@ export const prerender = true;
 
   <!-- Collection banner -->
   <section class="collection-banner" aria-label="Explore our collection">
-    <img src="/images/EarthtonesCollection4.png" alt="One Earth Gifting collection" class="collection-banner__img" loading="lazy">
+    <img src="/images/EarthtonesCollection4.png" alt="One Earth Gifting collection" class="collection-banner__img" loading="lazy" width="1254" height="1254">
     <div class="collection-banner__overlay" aria-hidden="true"></div>
     <div class="collection-banner__content">
       <a href="/shop" class="btn btn-outline" style="font-size:0.9rem;padding:1rem 2.4rem;letter-spacing:0.14em;">Explore Our Latest Collections</a>
@@ -110,7 +124,7 @@ export const prerender = true;
           ['🌳','A Tree Per Order','One tree planted per sale through local NGO partners in Asia'],
           ['📦','Plastic-Free Packaging','100% compostable, recycled or reusable packaging'],
           ['🚚','Free UK Delivery','Free standard delivery on all orders of 20 or more items'],
-          ['⭐','Verified Reviews','4.9★ from hundreds of verified customers'],
+          ['💚','Loved by Customers','Read what our customers say about us'],
         ].map(([icon,title,sub]) => (
           <div class="trust-item">
             <div class="trust-item__icon" aria-hidden="true">{icon}</div>

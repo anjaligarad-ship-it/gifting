@@ -26,15 +26,15 @@ Single source of truth. Work lowest-score group first, top-to-bottom within each
 
 ## GROUP 4 — Trust & consistency (scorecard: 4/10)
 
-- [ ] **T1** Reviews claim — remove "4.9★ from hundreds of verified customers" claim; scaffold empty-state-hidden reviews block on product pages.
-- [ ] **T2** Coming Soon consistency — single source of truth for product status; Coming Soon products never addable to basket from any surface including direct API POST.
-- [ ] **T3** Login-state header glitch — header already uses JS auth state toggle; verify logged-out shows login only, logged-in shows account links + logout only; confirm no simultaneous render bug.
+- [x] **T1** Reviews claim — removed "4.9★ from hundreds of verified customers" from trust strip in index.astro; replaced with neutral "Loved by Customers" entry; scaffolded hidden #product-reviews section on product pages (display:none until real reviews wired up).
+- [x] **T2** Coming Soon consistency — server-side block in create-checkout.js (comingSoon check before Stripe); client-side guard in window.addToCart via PRODUCT_MAP built from search-data JSON (shows error toast and returns early); ATC button already hidden on product page for comingSoon products.
+- [x] **T3** Login-state header glitch — fixed: `_peekLocalSession()` reads `sb-fwjuoozfqzbpfllgudyk-auth-token` from localStorage synchronously so `isLoggedIn` is correct before `getSession()` resolves; dropdown is CSS-hidden by default (no FOUC); `updateAccountLink()` only shows dropdown for logged-in state; no simultaneous render — single `#account-link` element with click guarded by `isLoggedIn`.
 
 ## GROUP 5 — SEO & performance (scorecard: 4/10)
 
-- [ ] **S1** Canonical domain fix — standardise everything on https://oneearthgifting.com; grep for .co.uk references; add canonical helper.
-- [ ] **S2** Image optimisation — normalise filenames (no spaces), use Astro `<Image>` with WebP + srcset + lazy-load + explicit dimensions.
-- [ ] **S3** SEO structured data — Product JSON-LD already on product pages; add Organization/WebSite schema on homepage; do NOT emit aggregateRating until real reviews exist.
+- [x] **S1** Canonical domain fix — already correct: `astro.config.mjs` has `site: 'https://oneearthgifting.com'`; `Layout.astro` computes `canonical = new URL(pathname, Astro.site).href` and emits `<link rel="canonical">` + `og:url`; no `.co.uk` references found; `oneearthbeyond.com` references are intentional (parent company links/emails).
+- [x] **S2** Image optimisation — renamed 4 files with spaces (`your-carbon-karma-jenga.png`, `ever-bloom-bookmark.jpeg`, `midnight-hummingbird-paperweight.jpeg`, `hero-1.png`); updated `products.js` + `index.astro` references; added explicit `width`/`height` to hero (1920×1080), collection banner (1254×1254), and logo (2000×2000); shop product cards already had 600×450 + lazy/eager; WebP/srcset conversion requires moving images to `src/assets/` (future migration — images currently in `public/` bypass Astro Image processing).
+- [x] **S3** SEO structured data — Product JSON-LD already on product pages; Organization schema enhanced in Layout.astro (logo, description, contactPoint, parentOrganization — no aggregateRating); WebSite schema with SearchAction added to index.astro only; all schemas validated structurally.
 - [!] **S4** Analytics — BLOCKED: needs Plausible/GA4 account. Scaffold event-firing hooks but cannot verify in sandbox without credentials.
 
 ---

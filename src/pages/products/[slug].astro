@@ -149,6 +149,15 @@ const mainImage = product.images[0] ? `/images/${product.images[0]}` : null;
     </div>
   </div>
 
+  <!-- T1: Reviews scaffold — hidden until real reviews exist (data-reviews-loaded toggled by future reviews JS) -->
+  <section id="product-reviews" aria-label="Customer reviews" style="display:none;padding:3rem 0;border-top:1px solid var(--border);">
+    <div class="container" style="max-width:760px;">
+      <h2 style="margin-bottom:1.5rem;">Customer reviews</h2>
+      <div id="reviews-list" style="display:flex;flex-direction:column;gap:1.25rem;"></div>
+      <p id="reviews-empty" style="color:var(--text-light);font-style:italic;">No reviews yet — be the first to share your thoughts.</p>
+    </div>
+  </section>
+
   {related.length > 0 && (
     <section style="background:var(--sand);padding:4rem 0;" aria-label="You might also like">
       <div class="container">

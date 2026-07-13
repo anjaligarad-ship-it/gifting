@@ -45,14 +45,16 @@ const canonical = new URL(Astro.url.pathname, Astro.site).href;
   <meta name="twitter:description" content={description}>
   <meta name="twitter:image"       content={image}>
 
-  <!-- Schema.org -->
+  <!-- Schema.org: sitewide Organization — no aggregateRating until real reviews exist (S3) -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@type": "Organization",
     "name": "One Earth Gifting",
     "url": "https://oneearthgifting.com",
-    "description": "Sustainable gifting for individuals and businesses",
+    "logo": "https://oneearthgifting.com/Logo/logo.png",
+    "description": "Curated sustainable gifts for individuals and businesses. Ethically sourced, plastic free packaged. One tree planted with every order.",
+    "contactPoint": { "@type": "ContactPoint", "email": "hello@oneearthgifting.com", "contactType": "customer service" },
     "parentOrganization": {
       "@type": "Organization",
       "name": "One Earth Beyond Ltd",
@@ -87,7 +89,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site).href;
         </button>
 
         <a href="/" class="site-header__logo" aria-label="One Earth Gifting — Home">
-          <img src="/Logo/logo.png" alt="One Earth Gifting" class="site-logo">
+          <img src="/Logo/logo.png" alt="One Earth Gifting" class="site-logo" width="2000" height="2000" loading="eager">
         </a>
 
         <nav class="site-nav" aria-label="Main navigation">
@@ -294,6 +296,11 @@ const canonical = new URL(Astro.url.pathname, Astro.site).href;
       });
     }
     function fmt(n) { return '£' + (n).toFixed(2).replace(/\.00$/,''); }
+
+    // Product map for client-side guards (comingSoon, etc.)
+    const PRODUCT_MAP = Object.fromEntries(
+      JSON.parse($('search-data')?.textContent || '[]').map(p => [p.slug, p])
+    );
 
     // ── Header scroll ─────────────────────────────────
     const header = document.querySelector('.site-header');
@@ -509,6 +516,9 @@ const canonical = new URL(Astro.url.pathname, Astro.site).href;
 
     // Add to cart (called from product pages)
     window.addToCart = function(product) {
+      // T2: server-side also blocks this, but guard client-side too
+      const meta = PRODUCT_MAP[product.slug];
+      if (meta?.comingSoon) { toast('This product is not yet available', 'error'); return; }
       const cart = getCart();
       const idx = cart.findIndex(i => i.slug === product.slug);
       if (idx > -1) cart[idx].qty++;
@@ -534,14 +544,27 @@ const canonical = new URL(Astro.url.pathname, Astro.site).href;
     window.isWishlisted = slug => getWL().includes(slug);
 
     // ── Auth state (header account dropdown + cart sync) ────
-    let isLoggedIn = false;
+    // T3: Read localStorage session synchronously so isLoggedIn is correct
+    // before getSession() resolves — prevents the glitch where logged-in users
+    // briefly see the login redirect on click.
+    function _peekLocalSession() {
+      try {
+        const raw = localStorage.getItem('sb-fwjuoozfqzbpfllgudyk-auth-token');
+        if (!raw) return false;
+        const parsed = JSON.parse(raw);
+        const token = parsed?.access_token || parsed?.[0]?.access_token;
+        const exp   = parsed?.expires_at   || parsed?.[0]?.expires_at;
+        return !!(token && exp && exp * 1000 > Date.now());
+      } catch { return false; }
+    }
+    let isLoggedIn = _peekLocalSession();
     function updateAccountLink(session) {
       const link = $('account-link');
       if (!link) return;
       isLoggedIn = !!session;
       link.setAttribute('aria-label', isLoggedIn ? 'My account' : 'Log in');
-      link.setAttribute('aria-expanded', 'false');
-      closeAccountDropdown();
+      // When logged out make sure the dropdown can't linger open
+      if (!isLoggedIn) { link.setAttribute('aria-expanded', 'false'); closeAccountDropdown(); }
     }
     function handleAuthChange(session) {
       updateAccountLink(session);

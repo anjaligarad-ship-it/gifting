@@ -28,7 +28,13 @@ export async function POST({ request }) {
 
   for (const item of items) {
     const product = products.find(p => p.slug === item.slug);
-    if (product?.restrictedTo && product.restrictedTo !== userEmail) {
+    if (!product) {
+      return new Response(JSON.stringify({ error: 'One or more items could not be found.' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+    }
+    if (product.comingSoon) {
+      return new Response(JSON.stringify({ error: `"${product.name}" is not yet available for purchase.` }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+    }
+    if (product.restrictedTo && product.restrictedTo !== userEmail) {
       return new Response(JSON.stringify({ error: 'This item is not available.' }), { status: 403, headers: { 'Content-Type': 'application/json' } });
     }
   }
