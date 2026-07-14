@@ -12,7 +12,11 @@ import { SHIPPING_OPTIONS, isFreeDelivery } from '../../lib/delivery.js';
 export const prerender = false;
 
 export async function POST({ request }) {
-  const stripe = new Stripe(import.meta.env.STRIPE_SECRET_KEY);
+  const stripeKey = import.meta.env.STRIPE_SECRET_KEY;
+  if (!stripeKey) {
+    return new Response(JSON.stringify({ error: 'Payment service is not configured. Please contact support.' }), { status: 503, headers: { 'Content-Type': 'application/json' } });
+  }
+  const stripe = new Stripe(stripeKey);
   const siteUrl = import.meta.env.PUBLIC_SITE_URL || 'https://oneearthgifting.com';
 
   let items, note, customer, userId, userEmail, promoCode, isGift, recipientAddress, giftMessage, hidePrice, selectedShippingId;
