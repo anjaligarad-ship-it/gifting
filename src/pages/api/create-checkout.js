@@ -6,10 +6,10 @@ import Stripe from 'stripe';
 import { products } from '../../data/products.js';
 import { PROMO_CODES } from '../../data/promoCodes.js';
 import { supabaseAdmin } from '../../lib/supabaseAdmin.js';
-import { validateAddress, formatAddress } from '../../lib/address.js';
-import { SHIPPING_OPTIONS, isFreeDelivery } from '../../lib/delivery.js';
 
 export const prerender = false;
+
+const FREE_DELIVERY_THRESHOLD = 50;
 
 export async function POST({ request }) {
   const stripeKey = import.meta.env.STRIPE_SECRET_KEY;
@@ -19,9 +19,9 @@ export async function POST({ request }) {
   const stripe = new Stripe(stripeKey);
   const siteUrl = import.meta.env.PUBLIC_SITE_URL || 'https://oneearthgifting.com';
 
-  let items, note, customer, userId, userEmail, promoCode, isGift, recipientAddress, giftMessage, hidePrice, selectedShippingId;
+  let items, note, customer, userId, userEmail, promoCode;
   try {
-    ({ items, note, customer, userId, userEmail, promoCode, isGift, recipientAddress, giftMessage, hidePrice, selectedShippingId } = await request.json());
+    ({ items, note, customer, userId, userEmail, promoCode } = await request.json());
   } catch {
     return new Response(JSON.stringify({ error: 'Invalid request body' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
   }
@@ -32,56 +32,32 @@ export async function POST({ request }) {
 
   for (const item of items) {
     const product = products.find(p => p.slug === item.slug);
-    if (!product) {
-      return new Response(JSON.stringify({ error: 'One or more items could not be found.' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
-    }
-    if (product.comingSoon) {
-      return new Response(JSON.stringify({ error: `"${product.name}" is not yet available for purchase.` }), { status: 400, headers: { 'Content-Type': 'application/json' } });
-    }
-    if (product.restrictedTo && product.restrictedTo !== userEmail) {
+    if (product?.restrictedTo && product.restrictedTo !== userEmail) {
       return new Response(JSON.stringify({ error: 'This item is not available.' }), { status: 403, headers: { 'Content-Type': 'application/json' } });
     }
   }
 
   if (!customer || !customer.name?.trim() || !customer.email?.trim() || !customer.phone?.trim()) {
-    return new Response(JSON.stringify({ error: 'Name, email, contact number and address are required' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+    return new Response(JSON.stringify({ error: 'Name, email and contact number are required' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
   }
 
   if (!/^\S+@\S+\.\S+$/.test(customer.email.trim())) {
     return new Response(JSON.stringify({ error: 'Please enter a valid email address' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
   }
 
-  // Validate structured address (G1)
-  const addrValidation = validateAddress(customer.address);
-  if (!addrValidation.ok) {
-    const firstError = Object.values(addrValidation.errors)[0];
-    return new Response(JSON.stringify({ error: firstError || 'Invalid delivery address' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
-  }
-  const structuredAddress = addrValidation.normalised;
+  // Normalise address to a flat string for metadata — supports both old (string) and new (object) cart formats
+  const addr = customer.address;
+  const addrLine = typeof addr === 'string'
+    ? addr.trim()
+    : [addr?.line1, addr?.line2, addr?.town, addr?.postcode].filter(Boolean).join(', ');
 
-  const subtotal  = items.reduce((s, item) => s + item.price * item.qty, 0);
-  const itemCount = items.reduce((s, item) => s + item.qty, 0);
-
-  // Stock check (D3) — query product_inventory; null = unlimited
-  const slugs = items.map(i => i.slug);
-  const { data: stockRows } = await supabaseAdmin
-    .from('product_inventory')
-    .select('slug, available_stock')
-    .in('slug', slugs);
-  const stockMap = Object.fromEntries((stockRows || []).map(r => [r.slug, r.available_stock]));
-  for (const item of items) {
-    const avail = stockMap[item.slug] ?? null; // null = unlimited
-    if (avail !== null && item.qty > avail) {
-      const name = item.name || item.slug;
-      const msg = avail === 0 ? `${name} is out of stock.` : `Only ${avail} of ${name} left in stock.`;
-      return new Response(JSON.stringify({ error: msg }), { status: 400, headers: { 'Content-Type': 'application/json' } });
-    }
+  if (!addrLine) {
+    return new Response(JSON.stringify({ error: 'Delivery address is required' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
   }
 
-  // Resolve shipping server-side — never trust the client price
-  const shippingOpt = SHIPPING_OPTIONS.find(o => o.id === selectedShippingId) || SHIPPING_OPTIONS[0];
-  const shippingPence = isFreeDelivery({ subtotal, itemCount }) ? 0 : shippingOpt.price;
+  const subtotal = items.reduce((s, item) => s + item.price * item.qty, 0);
 
+  // Promo validation — wrapped in try/catch so any failure silently skips the discount
   let discounts;
   let promoApplied = false;
   if (promoCode && userId) {
@@ -108,7 +84,6 @@ export async function POST({ request }) {
         }
       }
     } catch (promoErr) {
-      // Promo validation failed — proceed to checkout without discount
       console.error('Promo validation error:', promoErr?.message);
     }
   }
@@ -127,18 +102,6 @@ export async function POST({ request }) {
     quantity: item.qty,
   }));
 
-  // Add shipping as a line item so Stripe total matches what the customer saw
-  if (shippingPence > 0) {
-    lineItems.push({
-      price_data: {
-        currency: 'gbp',
-        product_data: { name: shippingOpt.label },
-        unit_amount: shippingPence,
-      },
-      quantity: 1,
-    });
-  }
-
   try {
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card', 'link'],
@@ -148,20 +111,38 @@ export async function POST({ request }) {
       success_url: `${siteUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${siteUrl}/cart`,
       shipping_address_collection: { allowed_countries: ['GB'] },
+      shipping_options: [
+        ...(subtotal >= FREE_DELIVERY_THRESHOLD
+          ? [{
+              shipping_rate_data: {
+                type: 'fixed_amount',
+                fixed_amount: { amount: 0, currency: 'gbp' },
+                display_name: 'Free delivery over £50',
+              },
+            }]
+          : []),
+        {
+          shipping_rate_data: {
+            type: 'fixed_amount',
+            fixed_amount: { amount: 395, currency: 'gbp' },
+            display_name: 'Standard delivery (3 to 5 working days)',
+          },
+        },
+        {
+          shipping_rate_data: {
+            type: 'fixed_amount',
+            fixed_amount: { amount: 695, currency: 'gbp' },
+            display_name: 'Express delivery (1 to 2 working days)',
+          },
+        },
+      ],
       metadata: {
-        selected_shipping_id: shippingOpt.id,
-        shipping_pence: String(shippingPence),
         gift_note: note || '',
-        gift_message: giftMessage || '',
-        is_gift: isGift ? 'true' : 'false',
-        hide_price: hidePrice ? 'true' : 'false',
         source: 'one-earth-gifting',
         customer_name: customer.name,
         customer_email: customer.email,
         customer_phone: customer.phone,
-        customer_address: formatAddress(structuredAddress),
-        customer_address_json: JSON.stringify(structuredAddress),
-        recipient_address_json: isGift && recipientAddress ? JSON.stringify(recipientAddress) : '',
+        customer_address: addrLine,
         user_id: userId || '',
         first_order_promo_user_id: promoApplied ? userId : '',
       },
