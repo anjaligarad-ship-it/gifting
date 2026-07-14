@@ -81,25 +81,31 @@ export async function POST({ request }) {
   let discounts;
   let promoApplied = false;
   if (promoCode && userId) {
-    const normalisedCode = promoCode.trim().toUpperCase();
-    const promo = PROMO_CODES[normalisedCode];
-    if (promo) {
-      const { data: { user: promoUser } } = await supabaseAdmin.auth.admin.getUserById(userId);
-      const { count: orderCount } = await supabaseAdmin
-        .from('orders')
-        .select('id', { count: 'exact', head: true })
-        .eq('user_id', userId);
-      if (promoUser?.email_confirmed_at && (!orderCount || orderCount === 0)) {
-        const discountAmount = Math.min(subtotal * promo.rate, promo.cap);
-        const coupon = await stripe.coupons.create({
-          amount_off: Math.round(discountAmount * 100),
-          currency: 'gbp',
-          duration: 'once',
-          name: promo.stripeLabel,
-        });
-        discounts = [{ coupon: coupon.id }];
-        promoApplied = true;
+    try {
+      const normalisedCode = promoCode.trim().toUpperCase();
+      const promo = PROMO_CODES[normalisedCode];
+      if (promo) {
+        const userRes = await supabaseAdmin.auth.admin.getUserById(userId);
+        const promoUser = userRes?.data?.user ?? null;
+        const { count: orderCount } = await supabaseAdmin
+          .from('orders')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', userId);
+        if (promoUser?.email_confirmed_at && (!orderCount || orderCount === 0)) {
+          const discountAmount = Math.min(subtotal * promo.rate, promo.cap);
+          const coupon = await stripe.coupons.create({
+            amount_off: Math.round(discountAmount * 100),
+            currency: 'gbp',
+            duration: 'once',
+            name: promo.stripeLabel,
+          });
+          discounts = [{ coupon: coupon.id }];
+          promoApplied = true;
+        }
       }
+    } catch (promoErr) {
+      // Promo validation failed — proceed to checkout without discount
+      console.error('Promo validation error:', promoErr?.message);
     }
   }
 

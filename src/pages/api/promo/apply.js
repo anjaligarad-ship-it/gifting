@@ -30,7 +30,9 @@ export async function POST({ request }) {
   }
 
   // Check email is verified
-  const { data: { user }, error: userError } = await supabaseAdmin.auth.admin.getUserById(userId);
+  const userRes = await supabaseAdmin.auth.admin.getUserById(userId);
+  const user = userRes?.data?.user ?? null;
+  const userError = userRes?.error ?? null;
   if (userError || !user) return json({ valid: false, error: 'Could not verify your account.' }, 400);
   if (!user.email_confirmed_at) {
     return json({ valid: false, error: 'Please verify your email address first. Check your inbox for a verification link.' });
