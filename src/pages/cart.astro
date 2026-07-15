@@ -37,85 +37,10 @@ export const prerender = true;
             <label for="cp-phone">Contact number *</label>
             <input type="tel" id="cp-phone" required autocomplete="tel">
           </div>
-          <!-- Gift toggle (G2) -->
-          <div style="margin:1.25rem 0;padding:1rem;background:var(--sand);border-radius:var(--radius-md);">
-            <label style="display:flex;align-items:center;gap:0.65rem;cursor:pointer;font-weight:600;">
-              <input type="checkbox" id="cp-is-gift" style="width:1.1rem;height:1.1rem;cursor:pointer;">
-              🎁 This is a gift — send to a different address
-            </label>
-          </div>
-
-          <!-- Billing / delivery address (used when not a gift) -->
-          <div id="cp-billing-section">
-            <h3 style="font-size:0.95rem;font-weight:700;margin-bottom:0.75rem;color:var(--text-dark);">Delivery Address</h3>
-          </div>
           <div class="form-group">
-            <label for="cp-addr-line1">Address line 1 *</label>
-            <input type="text" id="cp-addr-line1" required autocomplete="address-line1" placeholder="House number and street">
-            <p class="field-error" id="cp-addr-line1-err" style="color:#c0392b;font-size:0.8rem;margin:0.2rem 0 0;display:none;"></p>
+            <label for="cp-address">Delivery address *</label>
+            <textarea id="cp-address" required autocomplete="street-address" placeholder="Address line, city, postcode"></textarea>
           </div>
-          <div class="form-group">
-            <label for="cp-addr-line2">Address line 2 <span style="font-weight:400;color:var(--text-light);">(optional)</span></label>
-            <input type="text" id="cp-addr-line2" autocomplete="address-line2" placeholder="Flat, apartment, etc.">
-          </div>
-          <div class="form-group">
-            <label for="cp-addr-town">Town / City *</label>
-            <input type="text" id="cp-addr-town" required autocomplete="address-level2">
-            <p class="field-error" id="cp-addr-town-err" style="color:#c0392b;font-size:0.8rem;margin:0.2rem 0 0;display:none;"></p>
-          </div>
-          <div class="form-group">
-            <label for="cp-addr-postcode">Postcode *</label>
-            <input type="text" id="cp-addr-postcode" required autocomplete="postal-code" placeholder="e.g. CV1 1GU" style="text-transform:uppercase;max-width:180px;">
-            <p class="field-error" id="cp-addr-postcode-err" style="color:#c0392b;font-size:0.8rem;margin:0.2rem 0 0;display:none;"></p>
-          </div>
-          <!-- Gift message + hide prices (G3/G4 — shown when gift toggle is on) -->
-          <div id="cp-gift-extras" style="display:none;margin-top:0.75rem;">
-            <div class="form-group">
-              <label for="cp-gift-message">Gift message <span style="font-weight:400;color:var(--text-light);">(optional, printed on card)</span></label>
-              <textarea id="cp-gift-message" maxlength="250" rows="3" placeholder="Write a personal message for the recipient…" style="resize:vertical;"></textarea>
-              <p id="cp-gift-message-counter" style="font-size:0.78rem;color:var(--text-light);text-align:right;margin:0.2rem 0 0;">0 / 250</p>
-            </div>
-            <label style="display:flex;align-items:center;gap:0.65rem;cursor:pointer;font-size:0.9rem;margin-top:0.5rem;">
-              <input type="checkbox" id="cp-hide-price" style="width:1rem;height:1rem;cursor:pointer;">
-              Hide prices on packing slip (gift receipt)
-            </label>
-          </div>
-
-          <!-- Recipient address (G2 — shown when gift toggle is on) -->
-          <div id="cp-recipient-section" style="display:none;margin-top:1.5rem;padding:1rem;border:1.5px solid var(--forest);border-radius:var(--radius-md);">
-            <h3 style="font-size:0.95rem;font-weight:700;margin-bottom:0.75rem;color:var(--forest);">🎁 Recipient's Delivery Address</h3>
-            <div class="form-group">
-              <label for="cp-rec-name">Recipient's name *</label>
-              <input type="text" id="cp-rec-name" autocomplete="off">
-            </div>
-            <div class="form-group">
-              <label for="cp-rec-line1">Address line 1 *</label>
-              <input type="text" id="cp-rec-line1" autocomplete="off" placeholder="House number and street">
-              <p class="field-error" id="cp-rec-line1-err" style="color:#c0392b;font-size:0.8rem;margin:0.2rem 0 0;display:none;"></p>
-            </div>
-            <div class="form-group">
-              <label for="cp-rec-line2">Address line 2 <span style="font-weight:400;color:var(--text-light);">(optional)</span></label>
-              <input type="text" id="cp-rec-line2" autocomplete="off" placeholder="Flat, apartment, etc.">
-            </div>
-            <div class="form-group">
-              <label for="cp-rec-town">Town / City *</label>
-              <input type="text" id="cp-rec-town" autocomplete="off">
-              <p class="field-error" id="cp-rec-town-err" style="color:#c0392b;font-size:0.8rem;margin:0.2rem 0 0;display:none;"></p>
-            </div>
-            <div class="form-group">
-              <label for="cp-rec-postcode">Postcode *</label>
-              <input type="text" id="cp-rec-postcode" autocomplete="off" placeholder="e.g. M1 1AE" style="text-transform:uppercase;max-width:180px;">
-              <p class="field-error" id="cp-rec-postcode-err" style="color:#c0392b;font-size:0.8rem;margin:0.2rem 0 0;display:none;"></p>
-            </div>
-          </div>
-
-          <!-- Delivery options (C1) -->
-          <div id="cp-delivery-section" style="margin-top:1.75rem;">
-            <h3 style="font-size:0.95rem;font-weight:700;margin-bottom:0.75rem;color:var(--text-dark);">Delivery</h3>
-            <div id="cp-delivery-options" style="display:flex;flex-direction:column;gap:0.6rem;"></div>
-            <p id="cp-delivery-free-note" style="display:none;font-size:0.82rem;color:#2d7a3a;font-weight:600;margin-top:0.4rem;">🌿 Free delivery on this order</p>
-          </div>
-
           <!-- Promo code entry -->
           <div style="margin-top:1rem;">
             <label for="cp-promo-input" style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:0.4rem;">Promotion Code</label>
@@ -142,10 +67,6 @@ export const prerender = true;
               <span>Subtotal</span>
               <span id="cp-subtotal">£0.00</span>
             </div>
-            <div id="cp-shipping-row" style="display:flex;justify-content:space-between;font-size:0.95rem;color:var(--text-light);">
-              <span id="cp-shipping-label">Delivery</span>
-              <span id="cp-shipping-price">—</span>
-            </div>
             <div id="cp-discount-row" style="display:none;justify-content:space-between;font-size:0.95rem;font-weight:600;color:#2d7a3a;">
               <span id="cp-discount-label">Discount</span>
               <span id="cp-promo-discount"></span>
@@ -154,6 +75,7 @@ export const prerender = true;
               <span>Total to pay</span>
               <span id="cp-total">£0.00</span>
             </div>
+            <p style="font-size:0.78rem;color:var(--text-light);margin:0;">+ shipping (selected at checkout)</p>
           </div>
           <button type="button" class="btn btn-primary cart-checkout-btn" id="cp-checkout-btn">Pay with Card →</button>
           <p class="cart-secure">🔒 Secure checkout via Stripe · Free returns · Plastic-free packaging</p>
@@ -174,84 +96,6 @@ export const prerender = true;
   function getCustomer() { try { return JSON.parse(localStorage.getItem('oeg_customer') || '{}'); } catch { return {}; } }
   function saveCustomer(c) { try { localStorage.setItem('oeg_customer', JSON.stringify(c)); } catch {} }
 
-  // ── Delivery config (mirrors src/lib/delivery.js) ──────────────────────────
-  const SHIPPING_OPTIONS = [
-    { id: 'standard', label: 'Standard delivery', days: 5, price: 395, subtitle: '3–5 working days' },
-    { id: 'express',  label: 'Express delivery',  days: 2, price: 695, subtitle: '1–2 working days' },
-  ];
-  const FREE_DELIVERY_VALUE  = 50;
-  const FREE_DELIVERY_ITEMS  = 20;
-  const SPECIAL_ZONES = { BT:2, IV:2, HS:2, KW:2, ZE:2, GY:2, JE:2, IM:2 };
-
-  let selectedShippingId = 'standard';
-
-  function isDeliveryFree(subtotal, itemCount) {
-    return subtotal >= FREE_DELIVERY_VALUE || itemCount >= FREE_DELIVERY_ITEMS;
-  }
-
-  function specialExtraDays(postcode) {
-    if (!postcode) return 0;
-    const prefix = postcode.trim().toUpperCase().replace(/\d.*$/, '');
-    return SPECIAL_ZONES[prefix] ?? 0;
-  }
-
-  function addWorkingDays(startDate, n) {
-    let d = new Date(startDate);
-    while (n > 0) {
-      d.setDate(d.getDate() + 1);
-      const wd = d.toLocaleDateString('en-GB', { timeZone: 'Europe/London', weekday: 'short' });
-      if (wd !== 'Sat' && wd !== 'Sun') n--;
-    }
-    return d;
-  }
-
-  function arrivalLabel(opt, postcode) {
-    const dispatch = addWorkingDays(new Date(), 1);
-    const total = opt.days + specialExtraDays(postcode);
-    const arrival = addWorkingDays(dispatch, total);
-    return arrival.toLocaleDateString('en-GB', {
-      timeZone: 'Europe/London', weekday: 'long', day: 'numeric', month: 'long',
-    });
-  }
-
-  function renderDeliveryOptions() {
-    const container = $('cp-delivery-options');
-    const freeNote  = $('cp-delivery-free-note');
-    if (!container) return;
-
-    const cart      = getCart();
-    const subtotal  = cart.reduce((s, i) => s + i.price * i.qty, 0);
-    const itemCount = cart.reduce((s, i) => s + i.qty, 0);
-    const free      = isDeliveryFree(subtotal, itemCount);
-    const postcode  = $('cp-addr-postcode')?.value.trim() || '';
-
-    if (freeNote) freeNote.style.display = free ? 'block' : 'none';
-
-    container.innerHTML = SHIPPING_OPTIONS.map(opt => {
-      const effectivePrice = free ? 0 : opt.price;
-      const priceStr = effectivePrice === 0 ? 'Free' : `£${(effectivePrice / 100).toFixed(2)}`;
-      const arrStr   = arrivalLabel(opt, postcode);
-      const checked  = selectedShippingId === opt.id;
-      return `
-        <label class="delivery-option${checked ? ' selected' : ''}" data-id="${opt.id}" style="display:flex;align-items:center;gap:0.85rem;padding:0.85rem 1rem;border:1.5px solid ${checked ? 'var(--forest)' : 'var(--border)'};border-radius:var(--radius-md);cursor:pointer;background:${checked ? 'color-mix(in srgb,var(--forest) 6%,white)' : 'transparent'};">
-          <input type="radio" name="cp-delivery" value="${opt.id}" ${checked ? 'checked' : ''} style="accent-color:var(--forest);width:1.1rem;height:1.1rem;">
-          <div style="flex:1;">
-            <div style="font-weight:600;font-size:0.92rem;">${opt.label} <span style="font-weight:400;color:var(--text-light);font-size:0.85rem;">· ${opt.subtitle}</span></div>
-            <div style="font-size:0.8rem;color:var(--text-light);margin-top:0.15rem;">Arrives by ${arrStr}</div>
-          </div>
-          <div style="font-weight:700;font-size:0.95rem;color:${effectivePrice === 0 ? '#2d7a3a' : 'var(--text-dark)'};">${priceStr}</div>
-        </label>`;
-    }).join('');
-
-    container.querySelectorAll('input[name="cp-delivery"]').forEach(radio => {
-      radio.addEventListener('change', () => {
-        selectedShippingId = radio.value;
-        renderDeliveryOptions();
-        updateForm();
-      });
-    });
-  }
-
   // Applied promo state — session-only, re-validated server-side at checkout
   let appliedPromoCode = null;
   let appliedDiscountRate = 0;
@@ -268,7 +112,7 @@ export const prerender = true;
       const res = await fetch('/api/promo/apply', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code }),
+        body: JSON.stringify({ code, userId: session?.user?.id }),
       });
       const data = await res.json();
 
@@ -374,26 +218,15 @@ export const prerender = true;
 
     $('cart-page-login-prompt').hidden = true;
     $('cart-page-form-wrap').hidden = false;
-    renderDeliveryOptions();
-    const subtotal  = cart.reduce((s, i) => s + i.price * i.qty, 0);
-    const itemCount = cart.reduce((s, i) => s + i.qty, 0);
-    const free      = isDeliveryFree(subtotal, itemCount);
-    const selOpt    = SHIPPING_OPTIONS.find(o => o.id === selectedShippingId) || SHIPPING_OPTIONS[0];
-    const shippingPence = free ? 0 : selOpt.price;
-    const shipping  = shippingPence / 100;
+    const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0);
 
     const discountPence = appliedPromoCode
       ? Math.round(Math.min(subtotal * appliedDiscountRate, appliedDiscountCap) * 100)
       : 0;
     const discount = discountPence / 100;
-    const total = Math.max(0, subtotal - discount + shipping);
+    const total = Math.max(0, subtotal - discount);
 
     $('cp-subtotal').textContent = fmt(subtotal);
-
-    const shippingPriceEl = $('cp-shipping-price');
-    const shippingLabelEl = $('cp-shipping-label');
-    if (shippingPriceEl) shippingPriceEl.textContent = shippingPence === 0 ? 'Free' : fmt(shipping);
-    if (shippingLabelEl) shippingLabelEl.textContent = selOpt.label;
 
     const promoApplied = $('cp-promo-applied');
     const discountRow = $('cp-discount-row');
@@ -415,83 +248,18 @@ export const prerender = true;
     if ($('cp-name') && !$('cp-name').value) $('cp-name').value = c.name || session.user.user_metadata?.full_name || '';
     if ($('cp-email') && !$('cp-email').value) $('cp-email').value = c.email || session.user.email || '';
     if ($('cp-phone') && !$('cp-phone').value) $('cp-phone').value = c.phone || '';
-    if ($('cp-addr-line1') && !$('cp-addr-line1').value) $('cp-addr-line1').value = c.address?.line1 || '';
-    if ($('cp-addr-line2') && !$('cp-addr-line2').value) $('cp-addr-line2').value = c.address?.line2 || '';
-    if ($('cp-addr-town') && !$('cp-addr-town').value) $('cp-addr-town').value = c.address?.town || '';
-    if ($('cp-addr-postcode') && !$('cp-addr-postcode').value) $('cp-addr-postcode').value = c.address?.postcode || '';
+    if ($('cp-address') && !$('cp-address').value) $('cp-address').value = c.address || '';
   }
-
-  // UK postcode regex — mirrors server-side address.js
-  const UK_PC_RE = /^([A-Z]{1,2}\d[A-Z\d]?)\s*(\d[A-Z]{2})$/i;
-  function normalisePostcode(raw) {
-    if (!raw) return null;
-    const m = raw.trim().replace(/\s+/g, ' ').match(UK_PC_RE);
-    return m ? `${m[1].toUpperCase()} ${m[2].toUpperCase()}` : null;
-  }
-
-  function showFieldError(fieldId, msg) {
-    const el = $(`${fieldId}-err`);
-    if (el) { el.textContent = msg; el.style.display = msg ? 'block' : 'none'; }
-  }
-
-  // Gift toggle (G2/G3/G4)
-  $('cp-is-gift')?.addEventListener('change', () => {
-    const isGift = $('cp-is-gift').checked;
-    $('cp-recipient-section').style.display = isGift ? 'block' : 'none';
-    $('cp-gift-extras').style.display = isGift ? 'block' : 'none';
-  });
-
-  // Gift message char counter (G3)
-  $('cp-gift-message')?.addEventListener('input', () => {
-    const len = $('cp-gift-message').value.length;
-    const counter = $('cp-gift-message-counter');
-    if (counter) {
-      counter.textContent = `${len} / 250`;
-      counter.style.color = len > 230 ? '#c0392b' : 'var(--text-light)';
-    }
-  });
-
-  // Validate postcode format inline on blur
-  $('cp-addr-postcode')?.addEventListener('blur', () => {
-    const raw = $('cp-addr-postcode')?.value;
-    const norm = normalisePostcode(raw);
-    if (norm) {
-      $('cp-addr-postcode').value = norm;
-      showFieldError('cp-addr-postcode', '');
-    } else if (raw?.trim()) {
-      showFieldError('cp-addr-postcode', 'Enter a valid UK postcode (e.g. CV1 1GU)');
-    }
-    renderDeliveryOptions(); // refresh arrival date when postcode changes
-  });
 
   function readForm() {
-    const isGift = $('cp-is-gift')?.checked || false;
-    const form = {
+    return {
       name: $('cp-name')?.value.trim() || '',
       email: $('cp-email')?.value.trim() || '',
       phone: $('cp-phone')?.value.trim() || '',
-      isGift,
-      address: {
-        line1: $('cp-addr-line1')?.value.trim() || '',
-        line2: $('cp-addr-line2')?.value.trim() || '',
-        town: $('cp-addr-town')?.value.trim() || '',
-        postcode: normalisePostcode($('cp-addr-postcode')?.value) || $('cp-addr-postcode')?.value.trim() || '',
-      },
+      address: $('cp-address')?.value.trim() || '',
     };
-    if (isGift) {
-      form.giftMessage = $('cp-gift-message')?.value.trim() || '';
-      form.hidePrice = $('cp-hide-price')?.checked || false;
-      form.recipientAddress = {
-        name: $('cp-rec-name')?.value.trim() || '',
-        line1: $('cp-rec-line1')?.value.trim() || '',
-        line2: $('cp-rec-line2')?.value.trim() || '',
-        town: $('cp-rec-town')?.value.trim() || '',
-        postcode: normalisePostcode($('cp-rec-postcode')?.value) || $('cp-rec-postcode')?.value.trim() || '',
-      };
-    }
-    return form;
   }
-  ['cp-name', 'cp-email', 'cp-phone', 'cp-addr-line1', 'cp-addr-line2', 'cp-addr-town', 'cp-addr-postcode'].forEach(id => {
+  ['cp-name', 'cp-email', 'cp-phone', 'cp-address'].forEach(id => {
     $(id)?.addEventListener('change', () => saveCustomer(readForm()));
   });
 
@@ -518,23 +286,14 @@ export const prerender = true;
     const cart = getCart();
     if (cart.length === 0) { toast('Your basket is empty', 'error'); return; }
     const customer = readForm();
-    let hasErrors = false;
-    if (!customer.name) { toast('Please enter your full name', 'error'); return; }
-    if (!customer.email || !/^\S+@\S+\.\S+$/.test(customer.email)) { toast('Please enter a valid email address', 'error'); return; }
-    if (!customer.phone) { toast('Please enter your contact number', 'error'); return; }
-    if (!customer.address.line1) { showFieldError('cp-addr-line1', 'Address line 1 is required'); hasErrors = true; }
-    if (!customer.address.town) { showFieldError('cp-addr-town', 'Town / city is required'); hasErrors = true; }
-    const normPC = normalisePostcode(customer.address.postcode);
-    if (!normPC) { showFieldError('cp-addr-postcode', 'Enter a valid UK postcode (e.g. CV1 1GU)'); hasErrors = true; }
-    if (customer.isGift && customer.recipientAddress) {
-      if (!customer.recipientAddress.line1) { showFieldError('cp-rec-line1', 'Recipient address line 1 is required'); hasErrors = true; }
-      if (!customer.recipientAddress.town) { showFieldError('cp-rec-town', 'Recipient town / city is required'); hasErrors = true; }
-      const normRecPC = normalisePostcode(customer.recipientAddress.postcode);
-      if (!normRecPC) { showFieldError('cp-rec-postcode', 'Enter a valid UK postcode'); hasErrors = true; }
-      else customer.recipientAddress.postcode = normRecPC;
+    if (!customer.name || !customer.email || !customer.phone || !customer.address) {
+      toast('Please fill in your name, email, contact number and address', 'error');
+      return;
     }
-    if (hasErrors) { toast('Please fix the address errors above', 'error'); return; }
-    customer.address.postcode = normPC;
+    if (!/^\S+@\S+\.\S+$/.test(customer.email)) {
+      toast('Please enter a valid email address', 'error');
+      return;
+    }
     saveCustomer(customer);
 
     const btn = $('cp-checkout-btn');
@@ -546,11 +305,6 @@ export const prerender = true;
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           items: cart, note: getNote(), customer,
-          isGift: customer.isGift || false,
-          recipientAddress: customer.recipientAddress || null,
-          giftMessage: customer.giftMessage || '',
-          hidePrice: customer.hidePrice || false,
-          selectedShippingId,
           userId: session?.user?.id || null, userEmail: session?.user?.email || null,
           promoCode: appliedPromoCode || null,
         }),
