@@ -38,8 +38,18 @@ export const prerender = true;
             <input type="tel" id="cp-phone" required autocomplete="tel">
           </div>
           <div class="form-group">
-            <label for="cp-address">Delivery address *</label>
-            <textarea id="cp-address" required autocomplete="street-address" placeholder="Address line, city, postcode"></textarea>
+            <label for="cp-addr-line1">Address line 1 *</label>
+            <input type="text" id="cp-addr-line1" required autocomplete="address-line1" placeholder="House number and street">
+            <span id="cp-addr-line1-err" style="font-size:0.82rem;color:#c0392b;margin-top:0.3rem;display:block;min-height:1em;"></span>
+          </div>
+          <div class="form-group">
+            <label for="cp-addr-line2">Address line 2 <span style="font-weight:400;color:var(--text-light);">(optional)</span></label>
+            <input type="text" id="cp-addr-line2" autocomplete="address-line2" placeholder="Flat, apartment, building name">
+          </div>
+          <div class="form-group">
+            <label for="cp-addr-postcode">Postcode *</label>
+            <input type="text" id="cp-addr-postcode" required autocomplete="postal-code" placeholder="e.g. SW1A 1AA" style="text-transform:uppercase;max-width:16rem;">
+            <span id="cp-addr-postcode-err" style="font-size:0.82rem;color:#c0392b;margin-top:0.3rem;display:block;min-height:1em;"></span>
           </div>
           <!-- Promo code entry -->
           <div style="margin-top:1rem;">
@@ -248,19 +258,44 @@ export const prerender = true;
     if ($('cp-name') && !$('cp-name').value) $('cp-name').value = c.name || session.user.user_metadata?.full_name || '';
     if ($('cp-email') && !$('cp-email').value) $('cp-email').value = c.email || session.user.email || '';
     if ($('cp-phone') && !$('cp-phone').value) $('cp-phone').value = c.phone || '';
-    if ($('cp-address') && !$('cp-address').value) $('cp-address').value = c.address || '';
+    const savedAddr = c.address || {};
+    if ($('cp-addr-line1') && !$('cp-addr-line1').value) $('cp-addr-line1').value = savedAddr.line1 || '';
+    if ($('cp-addr-line2') && !$('cp-addr-line2').value) $('cp-addr-line2').value = savedAddr.line2 || '';
+    if ($('cp-addr-postcode') && !$('cp-addr-postcode').value) $('cp-addr-postcode').value = savedAddr.postcode || '';
   }
 
+  const UK_PC_RE = /^([A-Z]{1,2}\d[A-Z\d]?)\s*(\d[A-Z]{2})$/i;
+
   function readForm() {
+    const line1 = $('cp-addr-line1')?.value.trim() || '';
+    const line2 = $('cp-addr-line2')?.value.trim() || '';
+    const postcode = $('cp-addr-postcode')?.value.trim().toUpperCase() || '';
     return {
       name: $('cp-name')?.value.trim() || '',
       email: $('cp-email')?.value.trim() || '',
       phone: $('cp-phone')?.value.trim() || '',
-      address: $('cp-address')?.value.trim() || '',
+      address: { line1, line2, postcode },
     };
   }
-  ['cp-name', 'cp-email', 'cp-phone', 'cp-address'].forEach(id => {
+
+  function showFieldError(id, msg) {
+    const el = $(id);
+    if (el) el.style.outline = '2px solid #c0392b';
+    const err = $(`${id}-err`);
+    if (err) err.textContent = msg;
+  }
+  function clearFieldError(id) {
+    const el = $(id);
+    if (el) el.style.outline = '';
+    const err = $(`${id}-err`);
+    if (err) err.textContent = '';
+  }
+
+  ['cp-name', 'cp-email', 'cp-phone', 'cp-addr-line1', 'cp-addr-line2', 'cp-addr-postcode'].forEach(id => {
     $(id)?.addEventListener('change', () => saveCustomer(readForm()));
+  });
+  ['cp-addr-line1', 'cp-addr-postcode'].forEach(id => {
+    $(id)?.addEventListener('input', () => clearFieldError(id));
   });
 
   $('cp-promo-apply-btn')?.addEventListener('click', () => applyPromoCode($('cp-promo-input')?.value.trim().toUpperCase()));
@@ -286,14 +321,18 @@ export const prerender = true;
     const cart = getCart();
     if (cart.length === 0) { toast('Your basket is empty', 'error'); return; }
     const customer = readForm();
-    if (!customer.name || !customer.email || !customer.phone || !customer.address) {
-      toast('Please fill in your name, email, contact number and address', 'error');
-      return;
-    }
-    if (!/^\S+@\S+\.\S+$/.test(customer.email)) {
-      toast('Please enter a valid email address', 'error');
-      return;
-    }
+
+    // Client-side validation — clear previous field errors first
+    clearFieldError('cp-addr-line1');
+    clearFieldError('cp-addr-postcode');
+    let hasErrors = false;
+    if (!customer.name) { toast('Please enter your full name', 'error'); return; }
+    if (!customer.email || !/^\S+@\S+\.\S+$/.test(customer.email)) { toast('Please enter a valid email address', 'error'); return; }
+    if (!customer.phone) { toast('Please enter your contact number', 'error'); return; }
+    if (!customer.address.line1) { showFieldError('cp-addr-line1', 'Please enter your street address'); hasErrors = true; }
+    if (!UK_PC_RE.test(customer.address.postcode)) { showFieldError('cp-addr-postcode', 'Please enter a valid UK postcode (e.g. SW1A 1AA)'); hasErrors = true; }
+    if (hasErrors) { toast('Please fix the highlighted fields to continue', 'error'); return; }
+
     saveCustomer(customer);
 
     const btn = $('cp-checkout-btn');
@@ -309,11 +348,18 @@ export const prerender = true;
           promoCode: appliedPromoCode || null,
         }),
       });
-      const { url, error } = await res.json();
-      if (url) window.location.href = url;
+      let data;
+      try { data = await res.json(); }
+      catch {
+        toast('Something went wrong on our end — please try again in a moment', 'error');
+        btn.disabled = false; btn.textContent = 'Pay with Card →';
+        return;
+      }
+      const { url, error } = data;
+      if (url) { window.location.href = url; }
       else { toast(error || 'Checkout failed — please try again', 'error'); btn.disabled = false; btn.textContent = 'Pay with Card →'; }
     } catch {
-      toast('Network error — please try again', 'error');
+      toast('Could not reach our server — please check your connection and try again', 'error');
       btn.disabled = false;
       btn.textContent = 'Pay with Card →';
     }
