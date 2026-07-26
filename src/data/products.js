@@ -240,7 +240,7 @@ export const products = [
     description: 'Deep inside this forest, barely visible, stands a solitary figure. Most viewers miss him at first. That is entirely intentional. Chandrashekhar believes that great landscapes should make the human presence feel earned, not imposed. The arching trees, the warm earth, the green light tunnelling toward the unknown — this is a painting about the courage of going forward when you cannot yet see what lies ahead.',
     details: ['Original oil painting', 'By Chandrashekhar Prabhakar Aher', 'Presented by One Earth Beyond — Artist Launch, May 2026', 'Certificate of authenticity included', 'Ready to hang'],
     sustainability: 'Original artwork created with traditional fine art materials by Chandrashekhar Prabhakar Aher. A unique piece of art that will last a lifetime.',
-    images: ['aher-forest-path.jpg'],
+    images: ['aher-forest-path-room.png', 'aher-forest-path.jpg'],
     stripePriceId: 'price_REPLACE_ME',
     stock: 1,
     tags: ['fine-art'],
