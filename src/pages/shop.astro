@@ -30,12 +30,14 @@ export const prerender = true;
     <div class="container">
       <div class="products-grid" id="products-grid">
         {products.map(product => (
-          <div class="product-item visible" data-category={product.categorySlug} data-tags={product.tags.join(',')}>
+          <div class="product-item visible" data-category={product.categorySlug} data-tags={product.tags.join(',')} data-slug={product.slug} data-static-stock={product.stock === 0 ? '0' : 'ok'}>
             <article class="product-card">
               <div class="product-card__img">
                 <div class="card-carousel">
                   {product.comingSoon && <div class="coming-soon-ribbon">Coming Soon</div>}
                   {product.preOrder && <div class="coming-soon-ribbon">Pre-order Now</div>}
+                  {product.stock === 0 && <div class="sold-out-ribbon">Sold Out</div>}
+                  <div class="sold-out-ribbon js-sold-out-ribbon" style="display:none;">Sold Out</div>
                   <div class="card-carousel__slides">
                     {product.images.map((img, i) => (
                       <div class={`card-carousel__slide${i === 0 ? ' active' : ''}`}>
@@ -79,10 +81,15 @@ export const prerender = true;
                       <span class="coming-soon-badge">Coming Soon</span>
                       <a href={`/products/${product.slug}`} class="btn btn-ghost btn-sm">Learn More</a>
                     </>
+                  ) : product.stock === 0 ? (
+                    <>
+                      <span class="product-card__price">£{product.price.toFixed(2)}</span>
+                      <button class="btn btn-sm js-atc-btn" disabled style="opacity:0.45;cursor:not-allowed;background:var(--text-light);color:#fff;border-color:transparent;">Sold Out</button>
+                    </>
                   ) : (
                     <>
                       <span class="product-card__price">£{product.price.toFixed(2)}</span>
-                      <button class="btn btn-primary btn-sm"
+                      <button class="btn btn-primary btn-sm js-atc-btn"
                         onclick={`addToCart({slug:'${product.slug}',name:'${product.name.replace(/'/g,"\\'")}',price:${product.price},image:'/images/${product.images[0] || ''}'})`}
                         aria-label={`Add ${product.name} to basket`}>
                         {product.preOrder ? 'Pre-order Now' : 'Add to Basket'}
@@ -125,6 +132,47 @@ export const prerender = true;
     }));
   });
 
+  // Mark a product item as sold out in the DOM
+  function markSoldOut(item) {
+    item.dataset.soldOut = 'true';
+    const jsRibbon = item.querySelector('.js-sold-out-ribbon');
+    if (jsRibbon) jsRibbon.style.display = '';
+    const atcBtn = item.querySelector('.js-atc-btn');
+    if (atcBtn && !atcBtn.disabled) {
+      atcBtn.disabled = true;
+      atcBtn.textContent = 'Sold Out';
+      atcBtn.style.cssText = 'opacity:0.45;cursor:not-allowed;background:var(--text-light);color:#fff;border-color:transparent;';
+      atcBtn.removeAttribute('onclick');
+    }
+  }
+
+  // Re-sort grid: available first, sold-out last (within current filter)
+  function sortGrid() {
+    const grid = document.getElementById('products-grid');
+    const items = [...grid.querySelectorAll('.product-item')];
+    const available = items.filter(i => i.dataset.soldOut !== 'true');
+    const soldOut   = items.filter(i => i.dataset.soldOut === 'true');
+    [...available, ...soldOut].forEach(i => grid.appendChild(i));
+  }
+
+  // Fetch live inventory and apply sold-out state + sort
+  (async () => {
+    const items = [...document.querySelectorAll('.product-item[data-slug]')];
+    // Items already marked static-sold-out from products.js
+    items.filter(i => i.dataset.staticStock === '0').forEach(i => { i.dataset.soldOut = 'true'; });
+
+    const slugs = items.map(i => i.dataset.slug).join(',');
+    try {
+      const res = await fetch(`/api/inventory?slugs=${encodeURIComponent(slugs)}`);
+      const inv = await res.json();
+      items.forEach(item => {
+        const stock = inv[item.dataset.slug];
+        if (stock === 0) markSoldOut(item);
+      });
+    } catch { /* fail open — use static stock only */ }
+    sortGrid();
+  })();
+
   // URL param filter on load
   const params = new URLSearchParams(window.location.search);
   const cat = params.get('cat') || 'all';
@@ -143,6 +191,8 @@ export const prerender = true;
     btn.addEventListener('click', () => {
       applyFilter(btn.dataset.filter);
       history.replaceState(null, '', btn.dataset.filter === 'all' ? '/shop' : `/shop?cat=${btn.dataset.filter}`);
+      // Re-sort within the new filter view
+      sortGrid();
     });
   });
   document.querySelectorAll('.product-card__wishlist').forEach(btn => {

@@ -208,6 +208,8 @@ p  { color: var(--text-mid); line-height: 1.75; }
 
 /* ── Coming soon ───────────────────────────────────── */
 .coming-soon-ribbon { position: absolute; top: 0.7rem; left: 0.7rem; background: var(--forest); color: var(--white); font-family: var(--font-primary); font-size: 0.62rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.28rem 0.75rem; border-radius: 100px; z-index: 4; }
+.sold-out-ribbon { position: absolute; top: 0.7rem; left: 0.7rem; background: #555; color: var(--white); font-family: var(--font-primary); font-size: 0.62rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.28rem 0.75rem; border-radius: 100px; z-index: 4; }
+.product-item[data-sold-out="true"] .product-card__img { opacity: 0.72; }
 .coming-soon-badge { display: inline-block; font-family: var(--font-primary); font-size: 0.7rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--forest); border: 1.5px solid var(--forest); padding: 0.3rem 0.85rem; border-radius: 100px; }
 .corporate-cta-box { background: var(--sand); border-radius: var(--radius-md); padding: 1.4rem; margin-top: 1.5rem; border-left: 4px solid var(--forest); }
 .corporate-cta-box p { font-size: 0.9rem; margin-bottom: 1rem; }
