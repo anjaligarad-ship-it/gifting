@@ -214,7 +214,7 @@ export const products = [
     sustainability: 'Original artwork created with traditional fine art materials by Chandrashekhar Prabhakar Aher. A unique piece of art that will last a lifetime.',
     images: ['aher-river-remembers.jpg'],
     stripePriceId: 'price_REPLACE_ME',
-    stock: 1,
+    stock: 0,
     tags: ['fine-art'],
   },
   {
