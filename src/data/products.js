@@ -182,7 +182,7 @@ export const products = [
     description: 'Aher has a rare gift: he can stand at an ordinary shoreline and see what most people walk past. This sunset didn\'t need to be exotic or distant. He found it close to home, and yet he has rendered it with the kind of luminosity that stops you mid-breath. "The sea never repeats itself," he told me. "You have to be ready when it speaks." This canvas is proof that he always is.',
     details: ['Original oil painting', 'By Chandrashekhar Prabhakar Aher', 'Presented by One Earth Beyond — Artist Launch, May 2026', 'Certificate of authenticity included', 'Ready to hang'],
     sustainability: 'Original artwork created with traditional fine art materials by Chandrashekhar Prabhakar Aher. A unique piece of art that will last a lifetime.',
-    images: ['aher-golden-horizon.jpg'],
+    images: ['aher-golden-horizon-room.png', 'aher-golden-horizon-canvas.png', 'aher-golden-horizon.jpg'],
     stripePriceId: 'price_REPLACE_ME',
     stock: null,
     tags: ['fine-art'],
