@@ -142,7 +142,7 @@ export const products = [
     sustainability: 'Original artwork created with traditional fine art materials by Chandrashekhar Prabhakar Aher. A unique piece of art that will last a lifetime.',
     images: ['aher-out-to-sea-room.png', 'aher-out-to-the-sea.jpg'],
     stripePriceId: 'price_REPLACE_ME',
-    stock: null,
+    stock: 1,
     tags: ['fine-art'],
   },
   {
@@ -156,7 +156,7 @@ export const products = [
     sustainability: 'Original artwork created with traditional fine art materials by Chandrashekhar Prabhakar Aher. A unique piece of art that will last a lifetime.',
     images: ['aher-the-fisherman-room.png', 'aher-the-fisherman.jpg'],
     stripePriceId: 'price_REPLACE_ME',
-    stock: null,
+    stock: 1,
     tags: ['fine-art'],
   },
   {
@@ -170,7 +170,7 @@ export const products = [
     sustainability: 'Original artwork created with traditional fine art materials by Chandrashekhar Prabhakar Aher. A unique piece of art that will last a lifetime.',
     images: ['aher-the-keeper-of-shade-room.png', 'aher-keeper-of-shade.jpg'],
     stripePriceId: 'price_REPLACE_ME',
-    stock: null,
+    stock: 1,
     tags: ['fine-art'],
   },
   {
@@ -184,7 +184,7 @@ export const products = [
     sustainability: 'Original artwork created with traditional fine art materials by Chandrashekhar Prabhakar Aher. A unique piece of art that will last a lifetime.',
     images: ['aher-golden-horizon-room.png', 'aher-golden-horizon-canvas.png', 'aher-golden-horizon.jpg'],
     stripePriceId: 'price_REPLACE_ME',
-    stock: null,
+    stock: 1,
     tags: ['fine-art'],
   },
   {
@@ -198,7 +198,7 @@ export const products = [
     sustainability: 'Original artwork created with traditional fine art materials by Chandrashekhar Prabhakar Aher. A unique piece of art that will last a lifetime.',
     images: ['aher-after-the-rain-room.png', 'aher-after-the-rain.jpg'],
     stripePriceId: 'price_REPLACE_ME',
-    stock: null,
+    stock: 1,
     tags: ['fine-art'],
   },
   {
@@ -212,7 +212,7 @@ export const products = [
     sustainability: 'Original artwork created with traditional fine art materials by Chandrashekhar Prabhakar Aher. A unique piece of art that will last a lifetime.',
     images: ['aher-river-remembers.jpg'],
     stripePriceId: 'price_REPLACE_ME',
-    stock: 0,
+    stock: 1,
     tags: ['fine-art'],
   },
   {
@@ -226,7 +226,7 @@ export const products = [
     sustainability: 'Original artwork created with traditional fine art materials by Chandrashekhar Prabhakar Aher. A unique piece of art that will last a lifetime.',
     images: ['aher-under-the-canopy-room.png', 'aher-under-the-canopy.jpg'],
     stripePriceId: 'price_REPLACE_ME',
-    stock: null,
+    stock: 1,
     tags: ['fine-art'],
   },
   {
@@ -240,7 +240,7 @@ export const products = [
     sustainability: 'Original artwork created with traditional fine art materials by Chandrashekhar Prabhakar Aher. A unique piece of art that will last a lifetime.',
     images: ['aher-forest-path.jpg'],
     stripePriceId: 'price_REPLACE_ME',
-    stock: null,
+    stock: 1,
     tags: ['fine-art'],
   },
 
