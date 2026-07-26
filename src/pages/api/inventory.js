@@ -1,6 +1,8 @@
 // GET /api/inventory?slugs=slug1,slug2
 // Returns available stock for the requested product slugs.
 // null = unlimited, 0 = out of stock, N = available qty.
+// Source of truth: products table in Supabase (stock column).
+// Falls back to products.js static definition if no DB row exists.
 
 import { supabaseAdmin } from '../../lib/supabaseAdmin.js';
 import { products } from '../../data/products.js';
@@ -10,14 +12,11 @@ export const prerender = false;
 export async function GET({ url }) {
   const rawSlugs = url.searchParams.get('slugs') || '';
   const slugs = rawSlugs.split(',').map(s => s.trim()).filter(Boolean);
-  if (slugs.length === 0) {
-    return json({});
-  }
+  if (slugs.length === 0) return json({});
 
-  // Fetch rows from product_inventory; fall back to products.js stock if no row.
   const { data: rows, error } = await supabaseAdmin
-    .from('product_inventory')
-    .select('slug, available_stock')
+    .from('products')
+    .select('slug, stock')
     .in('slug', slugs);
 
   if (error) {
@@ -26,14 +25,13 @@ export async function GET({ url }) {
     return json(Object.fromEntries(slugs.map(s => [s, null])));
   }
 
+  // 999 is the DB sentinel for "unlimited" (column is NOT NULL)
+  const dbMap = Object.fromEntries((rows || []).map(r => [r.slug, r.stock >= 999 ? null : r.stock]));
   const result = {};
-  const dbMap = Object.fromEntries((rows || []).map(r => [r.slug, r.available_stock]));
-
   for (const slug of slugs) {
     if (slug in dbMap) {
-      result[slug] = dbMap[slug]; // DB row wins (may be 0, N, or null)
+      result[slug] = dbMap[slug];
     } else {
-      // No DB row: fall back to products.js stock field
       const product = products.find(p => p.slug === slug);
       result[slug] = product?.stock ?? null;
     }
