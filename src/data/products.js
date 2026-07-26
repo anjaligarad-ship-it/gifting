@@ -17,7 +17,7 @@ export const products = [
     corporate: 'Taking corporate orders now. Minimum order: 20 sets. Contact hello@oneearthbeyond.com',
     images: ['your-carbon-karma-jenga.png'],
     stripePriceId: 'price_REPLACE_ME',
-    stock: null,
+    stock: 10,
     tags: ['gift-sets'],
   },
   {
@@ -31,7 +31,7 @@ export const products = [
     sustainability: 'Made from GOTS certified organic cotton. Embroidered by fairly paid artisans. Packaged in recycled paper with no plastic.',
     images: ['GardenPlacemat4(1).jpeg', 'GardenPlacemat4(2).jpeg', 'GardenPlacemat4(3).JPG', 'GardenPlacemat4(4).JPG'],
     stripePriceId: 'price_REPLACE_ME',
-    stock: null,
+    stock: 1,
     tags: ['home-living'],
   },
   {
@@ -45,7 +45,7 @@ export const products = [
     sustainability: 'Linen cotton blend uses 60% less water than pure cotton. Natural dyes. Compostable packaging.',
     images: ['EarthTonePlacemat2(1).JPG', 'EarthTonePlacemat2(2).JPG', 'EarthTonePlacemat2(3).JPG', 'EarthTonePlacemat2(4).JPG', 'EarthTonePlacemat2(5).JPG'],
     stripePriceId: 'price_REPLACE_ME',
-    stock: null,
+    stock: 0,
     tags: ['home-living'],
   },
   {
@@ -59,6 +59,7 @@ export const products = [
     sustainability: 'Every piece in this collection meets our strict ethical sourcing criteria. The outer packaging is fully compostable.',
     images: ['EarthToneCollection1.png', 'EarthTonesCollection2.jpeg', 'EarthTonesCollection3.jpg', 'EarthtonesCollection4.png'],
     stripePriceId: 'price_REPLACE_ME',
+    stock: 0,
     tags: ['gift-sets'],
   },
   {
@@ -72,6 +73,7 @@ export const products = [
     sustainability: 'Every item meets our strict ethical sourcing criteria. The basket is fair trade certified and can be reused indefinitely.',
     images: ['LittleGaurdianHamper1.png', 'LittleGaurdianHamper2.png', 'LittleGaurdianHamper3.png', 'LittleGaurdianHamper4.png', 'LittleGaurdianHamper5.jpeg'],
     stripePriceId: 'price_REPLACE_ME',
+    stock: 0,
     tags: ['gift-sets'],
   },
   {
@@ -85,7 +87,7 @@ export const products = [
     sustainability: 'Made from natural, sustainably sourced materials. Compostable packaging. No plastics in production.',
     images: ['Coaster1.jpeg'],
     stripePriceId: 'price_REPLACE_ME',
-    stock: null,
+    stock: 0,
     tags: ['home-living'],
   },
   {
@@ -99,7 +101,7 @@ export const products = [
     sustainability: 'Made from recycled card. Botanicals sourced from UK gardens and meadows. Zero plastic.',
     images: ['ever-bloom-bookmark.jpeg'],
     stripePriceId: 'price_REPLACE_ME',
-    stock: null,
+    stock: 0,
     tags: ['stationery'],
   },
   {
@@ -113,7 +115,7 @@ export const products = [
     sustainability: 'Made by fairly paid artisans using traditional embroidery techniques. Cotton canvas, natural dyes. Zero plastic in production or packaging.',
     images: ['TotBag1.png', 'TotBagg2.png'],
     stripePriceId: 'price_REPLACE_ME',
-    stock: null,
+    stock: 0,
     tags: ['home-living'],
   },
   {
@@ -127,7 +129,7 @@ export const products = [
     sustainability: 'Natural stones, non toxic paints, zero plastic packaging. Each stone is a one of a kind object rather than a manufactured product.',
     images: ['midnight-hummingbird-paperweight.jpeg'],
     stripePriceId: 'price_REPLACE_ME',
-    stock: null,
+    stock: 1,
     tags: ['stationery'],
   },
   // --- Fine Art: Chandrashekhar Prabhakar Aher ---
